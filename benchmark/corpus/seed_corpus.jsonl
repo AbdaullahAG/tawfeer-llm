@@ -1,0 +1,27 @@
+{"id": "msa-001", "category": "msa", "text": "تسعى الحكومة إلى تطوير القطاع الصحي من خلال مشاريع استثمارية جديدة."}
+{"id": "msa-002", "category": "msa", "text": "أعلنت الشركة عن نتائجها المالية للربع الثالث من هذا العام."}
+{"id": "msa-003", "category": "msa", "text": "يشكل التغير المناخي تحدياً كبيراً يواجه دول العالم أجمع."}
+{"id": "msa-004", "category": "msa", "text": "قررت الجامعة تمديد فترة التسجيل لمدة أسبوعين إضافيين."}
+{"id": "msa-005", "category": "msa", "text": "نشرت الصحيفة تقريراً مفصلاً عن أوضاع سوق العمل المحلي."}
+{"id": "dia-gulf-001", "category": "dialect", "region": "gulf", "text": "شلونك اليوم؟ وش سويت بالويكند؟"}
+{"id": "dia-gulf-002", "category": "dialect", "region": "gulf", "text": "أبغى أروح السوق بعدين أشتري شوي أغراض."}
+{"id": "dia-gulf-003", "category": "dialect", "region": "gulf", "text": "هذا الموضوع صار يبيله وقت زين نناقشه سوا."}
+{"id": "dia-egy-001", "category": "dialect", "region": "egyptian", "text": "إزيك يا صاحبي؟ عامل إيه في الشغل الجديد؟"}
+{"id": "dia-egy-002", "category": "dialect", "region": "egyptian", "text": "هروح الشغل بدري النهارده عشان عندي اجتماع مهم."}
+{"id": "dia-egy-003", "category": "dialect", "region": "egyptian", "text": "الاكل ده كان جامد أوي، لازم نيجي تاني."}
+{"id": "dia-lev-001", "category": "dialect", "region": "levantine", "text": "كيفك اليوم؟ شو عم تعمل هالأيام؟"}
+{"id": "dia-lev-002", "category": "dialect", "region": "levantine", "text": "رح روح عالسوق بعد شوي جيب شغلات البيت."}
+{"id": "dia-lev-003", "category": "dialect", "region": "levantine", "text": "هاد الموضوع صار الو وقت لازم نحكي فيه سوا."}
+{"id": "dia-mag-001", "category": "dialect", "region": "maghrebi", "text": "لاباس عليك؟ شنو دار راسك هاد الويكند؟"}
+{"id": "dia-mag-002", "category": "dialect", "region": "maghrebi", "text": "غادي نمشي للسوق من بعد نشري شي حوايج."}
+{"id": "dia-mag-003", "category": "dialect", "region": "maghrebi", "text": "هاد الموضوع خصو وقت باش نتفاهموا فيه مع بعضياتنا."}
+{"id": "mix-001", "category": "mixed", "text": "لازم أعمل update للـ app قبل ما أبعت الـ report النهاردة."}
+{"id": "mix-002", "category": "mixed", "text": "الاجتماع مع الـ client مؤجل لـ 3 pm يوم الاثنين الجاي."}
+{"id": "mix-003", "category": "mixed", "text": "استخدمنا Python وTensorFlow لبناء الـ model بتاع الـ project."}
+{"id": "mix-004", "category": "mixed", "text": "السعر صار 250 دولار بعد الـ discount يلي أعلنوا عنه."}
+{"id": "mix-005", "category": "mixed", "text": "لازم نحدث الـ database قبل ما نطلق الـ version 2.0."}
+{"id": "for-001", "category": "formal", "text": "يلتزم الطرف الأول بتسليم المستندات المطلوبة خلال مدة أقصاها ثلاثون يوماً من تاريخ توقيع هذا الاتفاق."}
+{"id": "for-002", "category": "formal", "text": "تخضع جميع النزاعات الناشئة عن هذا العقد للتحكيم وفقاً للأنظمة المعمول بها."}
+{"id": "for-003", "category": "formal", "text": "يحق لأي من الطرفين إنهاء هذا الاتفاق بإشعار خطي مسبق مدته ستون يوماً."}
+{"id": "for-004", "category": "formal", "text": "تُعد هذه الوثيقة سارية المفعول من تاريخ التوقيع عليها من الطرفين المعنيين."}
+{"id": "for-005", "category": "formal", "text": "يتحمل الطرف المخالف كافة التبعات القانونية الناتجة عن الإخلال بأحكام هذا العقد."}
