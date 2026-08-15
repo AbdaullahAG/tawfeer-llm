@@ -1,0 +1,27 @@
+# Python bytecode / cache
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Build artifacts
+build/
+dist/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Generated benchmark output (reproducible via run_benchmark.py,
+# not meant to be hand-edited or trusted from a stale commit)
+benchmark/results/*.md
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store

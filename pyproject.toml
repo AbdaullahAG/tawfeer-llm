@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ar-tokenwise"
+version = "0.1.0"
+description = "Lightweight, conservative Arabic text normalization and token-usage reporting for LLM API calls."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [
+    { name = "Abdallah" }
+]
+keywords = ["arabic", "nlp", "tokenization", "llm", "normalization"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Natural Language :: Arabic",
+]
+
+# No runtime dependencies for v1 core (normalize.py uses stdlib only).
+dependencies = []
+
+[project.optional-dependencies]
+# Only needed if the user wants real tokenizer-based fertility reports (v1 report.py).
+# Kept optional so core normalization stays dependency-free.
+tokenizers = ["tiktoken>=0.7"]
+dev = ["pytest>=8.0", "pytest-cov>=5.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ar_tokenwise"]
+# Ensure the PEP 561 marker ships inside the built wheel.
+include = ["src/ar_tokenwise/py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
