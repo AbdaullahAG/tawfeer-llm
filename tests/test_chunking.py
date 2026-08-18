@@ -69,10 +69,12 @@ def test_chunk_text_merges_undersized_trailing_chunk() -> None:
 
 
 def test_chunk_text_does_not_merge_when_merge_would_exceed_max() -> None:
-    # Each sentence is 3 words; max_tokens=3 means they can't be merged
-    # even though the trailing chunk is under min_tokens=10.
-    text = "كلمة كلمة كلمة. كلمة كلمة كلمة."
-    result = chunk_text(text, counter=_word_count_counter, min_tokens=10, max_tokens=3)
+    # First sentence (3 tokens) fills the max_tokens=3 budget on its own,
+    # so the 2-token trailing sentence starts a new chunk. That trailing
+    # chunk (2 tokens) is under min_tokens=3, so a merge is attempted --
+    # but 3 + 2 = 5 exceeds max_tokens=3, so it must NOT merge.
+    text = "كلمة كلمة كلمة. كلمة كلمة."
+    result = chunk_text(text, counter=_word_count_counter, min_tokens=3, max_tokens=3)
     assert len(result) == 2
 
 
