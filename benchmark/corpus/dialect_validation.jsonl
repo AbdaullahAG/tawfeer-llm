@@ -1,0 +1,60 @@
+{"id": "val-msa-01", "expected_category": "msa", "text": "أعلنت الوزارة أن المشروع سيبدأ تنفيذه في مطلع العام المقبل وفقا للخطة الموضوعة."}
+{"id": "val-msa-02", "expected_category": "msa", "text": "يشير التقرير إلى أن معدلات النمو الاقتصادي شهدت تحسنا ملحوظا خلال الربع الأخير."}
+{"id": "val-msa-03", "expected_category": "msa", "text": "ينبغي على الطلاب الذين يرغبون في التسجيل أن يتقدموا بطلباتهم قبل نهاية الشهر."}
+{"id": "val-msa-04", "expected_category": "msa", "text": "حيث إن الظروف الجوية تحسنت، فإن الرحلات الجوية استؤنفت بشكل طبيعي اليوم."}
+{"id": "val-msa-05", "expected_category": "msa", "text": "أوضح المتحدث الرسمي أن القرار جاء نظرا للمستجدات الأمنية في المنطقة."}
+{"id": "val-msa-06", "expected_category": "msa", "text": "تعمل الشركة على تطوير منتجاتها بالإضافة إلى توسيع نطاق خدماتها في الأسواق الجديدة."}
+{"id": "val-msa-07", "expected_category": "msa", "text": "يعد هذا الإنجاز العلمي خطوة مهمة نحو تحقيق الأهداف التي وضعها الباحثون."}
+{"id": "val-msa-08", "expected_category": "msa", "text": "بينما كانت المفاوضات مستمرة، صدر بيان يوضح المواقف من الطرفين المعنيين."}
+{"id": "val-msa-09", "expected_category": "msa", "text": "لذلك قررت اللجنة تأجيل الاجتماع إلى موعد لاحق يعلن عنه فيما بعد."}
+{"id": "val-msa-10", "expected_category": "msa", "text": "تستند الدراسة إلى بيانات ميدانية جمعت من عدة مدن على مدار عامين كاملين."}
+{"id": "val-msa-11", "expected_category": "msa", "text": "من الجدير بالذكر أن المبادرة التي أطلقتها الجهة المختصة لاقت استحسانا واسعا."}
+{"id": "val-msa-12", "expected_category": "msa", "text": "سوف يتم الإعلان عن النتائج النهائية عقب انتهاء عملية المراجعة الشاملة."}
+{"id": "val-gulf-01", "expected_category": "gulf", "text": "شلونك اليوم؟ وش سويت من الصبح؟ الحين رايح اشتغل."}
+{"id": "val-gulf-02", "expected_category": "gulf", "text": "أبغى أروح البر بكرة، بس ما ادري الجو زين ولا لا."}
+{"id": "val-gulf-03", "expected_category": "gulf", "text": "تراه ما يبيله وقت طويل، خلاص خلصنا الشغل وايد بسرعة."}
+{"id": "val-gulf-04", "expected_category": "gulf", "text": "شخبارك يا خوي؟ عساك طيب، شفتك من زمان ما شفتك."}
+{"id": "val-gulf-05", "expected_category": "gulf", "text": "قدايش هالساعة الحين؟ لازم ادش الدوام قبل لا اتأخر."}
+{"id": "val-gulf-06", "expected_category": "gulf", "text": "هالحين مب فاضي، بس بعدين اتصل عليك ان شاء الله."}
+{"id": "val-gulf-07", "expected_category": "gulf", "text": "شنو رايك نروح فطور زين الصبح ونرجع بدري؟"}
+{"id": "val-gulf-08", "expected_category": "gulf", "text": "لو سمحت ممكن تعطيني الملف؟ عاد ما لقيته عندي."}
+{"id": "val-gulf-09", "expected_category": "gulf", "text": "وايد تعبت اليوم، اشتغلت من الصبح للحين بدون راحة."}
+{"id": "val-gulf-10", "expected_category": "gulf", "text": "زين انك جيت، كنا نبيك تساعدنا بهالموضوع."}
+{"id": "val-gulf-11", "expected_category": "gulf", "text": "يبغاله شوي وقت لين يخلص، عاد اصبر علينا."}
+{"id": "val-gulf-12", "expected_category": "gulf", "text": "شلون الحال؟ خوش فكرة انك تجي، هني الجو حلو."}
+{"id": "val-egy-01", "expected_category": "egyptian", "text": "إزيك يا صاحبي؟ عامل ايه في الشغل الجديد ده؟"}
+{"id": "val-egy-02", "expected_category": "egyptian", "text": "عايز اروح السوق بس مش عارف امتى هلاقي وقت فاضي."}
+{"id": "val-egy-03", "expected_category": "egyptian", "text": "ازاي عملت كده؟ ده كان جامد أوي والله."}
+{"id": "val-egy-04", "expected_category": "egyptian", "text": "دلوقتي مفيش وقت خالص، هروح اشتغل واجي بعدين."}
+{"id": "val-egy-05", "expected_category": "egyptian", "text": "ليه بتتأخر كده كل مرة؟ احنا مستنينك من ساعة."}
+{"id": "val-egy-06", "expected_category": "egyptian", "text": "لسه ما خلصتش الشغلانة، برضه محتاج وقت أطول شوية."}
+{"id": "val-egy-07", "expected_category": "egyptian", "text": "يلا بينا نروح دلوقتي قبل ما الزحمة تزيد أوي."}
+{"id": "val-egy-08", "expected_category": "egyptian", "text": "فين كنت من الصبح؟ اتصلت عليك كتير ومحدش رد."}
+{"id": "val-egy-09", "expected_category": "egyptian", "text": "بجد ده كلام حلو أهو، ده فعلا شيء جدعان منك."}
+{"id": "val-egy-10", "expected_category": "egyptian", "text": "هعمل ايه لو الشغل مخلصش امبارح؟ عشان كده هستعجل."}
+{"id": "val-egy-11", "expected_category": "egyptian", "text": "عاوز حاجة تانية ولا كده كفاية؟ قولي ايه اللي ناقصك."}
+{"id": "val-egy-12", "expected_category": "egyptian", "text": "الأكل ده كان حلو أوي، لازم نيجي هنا تاني قريب."}
+{"id": "val-lev-01", "expected_category": "levantine", "text": "كيفك اليوم؟ شو عم تعمل هالأيام معك وقت فاضي؟"}
+{"id": "val-lev-02", "expected_category": "levantine", "text": "بدي روح عالسوق هلق، بس ما بعرف شو رح اشتري."}
+{"id": "val-lev-03", "expected_category": "levantine", "text": "هلأ ما في وقت كتير، لازم نخلص الشغل بسرعة."}
+{"id": "val-lev-04", "expected_category": "levantine", "text": "وين كنت من الصبح؟ حكيتلك تعا عندي هلق."}
+{"id": "val-lev-05", "expected_category": "levantine", "text": "هاد الشي منيح كتير، بس هيك مو رح يكفي لحالو."}
+{"id": "val-lev-06", "expected_category": "levantine", "text": "عم بشتغل عالموضوع من الصبح، رح خلص قريب ان شاء الله."}
+{"id": "val-lev-07", "expected_category": "levantine", "text": "ليش ما حكيتلي من قبل؟ كنت عرفت الموضوع من زمان."}
+{"id": "val-lev-08", "expected_category": "levantine", "text": "شو رأيك نروح هنيك بكرا؟ الجو رح يكون منيح."}
+{"id": "val-lev-09", "expected_category": "levantine", "text": "خلص الشغل، بكفي هيك اليوم، تعبنا كتير والله."}
+{"id": "val-lev-10", "expected_category": "levantine", "text": "عنجد هاد الخبر منيح كتير، فرحت لما سمعته."}
+{"id": "val-lev-11", "expected_category": "levantine", "text": "بدك تيجي معنا؟ رح نروح هلق عالبيت وبعدين نطلع."}
+{"id": "val-lev-12", "expected_category": "levantine", "text": "شفت شو صار امبارح؟ ولك هاد شي ما بينصدق."}
+{"id": "val-mag-01", "expected_category": "maghrebi", "text": "واش راك اليوم؟ لاباس عليك؟ دابا خارج للخدمة."}
+{"id": "val-mag-02", "expected_category": "maghrebi", "text": "بغيت نمشي للسوق غادي، بصح ما عرفتش شحال الوقت."}
+{"id": "val-mag-03", "expected_category": "maghrebi", "text": "كيفاش دار هاد الشي؟ راه ما فهمتش زعما شنو صرا."}
+{"id": "val-mag-04", "expected_category": "maghrebi", "text": "خاصني نمشي دابا، عندي شغل بزاف اليوم ما زال."}
+{"id": "val-mag-05", "expected_category": "maghrebi", "text": "واخا نروح معاك، بصح خلينا نمشيو بكري قبل الليل."}
+{"id": "val-mag-06", "expected_category": "maghrebi", "text": "نتا فين كنتي هاد الصباح؟ حنا كنا كنستناوك بزاف."}
+{"id": "val-mag-07", "expected_category": "maghrebi", "text": "صافي خلاص، ديال الشغل هاد رح نكملوه غدا ان شاء الله."}
+{"id": "val-mag-08", "expected_category": "maghrebi", "text": "ماشي هاد الموضوع اللي كنا كنهضرو عليه البارح."}
+{"id": "val-mag-09", "expected_category": "maghrebi", "text": "الدراري كانو فرحانين بزاف، الفلوس اللي جبتيها عجباتهم."}
+{"id": "val-mag-10", "expected_category": "maghrebi", "text": "غادي نمشي دابا للقهوة، مزال عندي شوية وقت قبل الخدمة."}
+{"id": "val-mag-11", "expected_category": "maghrebi", "text": "شحال هادشي؟ بصح غالي بزاف على راسي هاد النهار."}
+{"id": "val-mag-12", "expected_category": "maghrebi", "text": "والو ما بقى فالبيت، خاصنا نمشيو نشريو دابا."}
