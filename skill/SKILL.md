@@ -58,19 +58,14 @@ unifies alef/yeh orthographic variants, which is unnecessary risk when
 exact spelling may matter to the reader, on top of the tashkeel caveat
 above.
 
-## Known v1 limitations
+## Known v1 limitations (resolved in v2 — see below)
 
-- **No automatic content-type detection.** This skill does not scan text
-  for religious/legal/medical markers — the caller (you, the agent) must
-  decide whether normalization is appropriate based on the guidance
-  above. Dialect-aware and content-aware safety modes are planned for
-  v2 — see the "Roadmap" section in the repository's
-  [README](../README.md).
-- **No mixed Arabic-English-numeral handling.** Non-Arabic characters
-  pass through untouched, but there is no special logic yet for
-  code-switched text (e.g. product names, technical terms). This is
-  planned for v2 — see the "Roadmap" section in the repository's
-  [README](../README.md).
+- ~~No automatic content-type detection~~ — see "v2 library modules"
+  below: `safety_modes.py` now provides advisory (never automatic or
+  blocking) content-sensitivity warnings.
+- ~~No mixed Arabic-English-numeral handling~~ — see "v2 library
+  modules" below: `mixed_text.py` now reports Arabic/non-Arabic
+  fertility separately.
 - **Realistic savings vary widely.** The example below shows ~17%
   savings, but that example text is diacritized. Most everyday Arabic
   text (chat messages, articles, casual writing) has no diacritics to
@@ -78,6 +73,36 @@ above.
   be smaller — often close to zero — and most of the benefit will come
   from digit unification when present. Always run `report_cli.py` on
   your actual text rather than assuming the example's percentage.
+
+## v2 library modules (Python API only — not yet wired into the CLI scripts below)
+
+These are available via `from ar_tokenwise import ...` but have no CLI
+wrapper yet under `skill/scripts/`. Use them from Python, or via the
+bash tool with a short inline script, if a task needs them.
+
+- **`chunk_text()`** — sentence-boundary-aware chunking for RAG pipelines,
+  with a token budget (`min_tokens`/`max_tokens`).
+- **`report_mixed_fertility()`** — separate token-per-word fertility for
+  the Arabic vs. non-Arabic portions of code-switched text, so a report
+  on a mostly-English sentence with a few Arabic words isn't misleading.
+- **`detect_dialect()`** — EXPERIMENTAL. Returns a probability-like
+  distribution across MSA/Gulf/Egyptian/Levantine/Maghrebi, or an
+  explicit `insufficient_text`/`no_signal` status — never a single
+  confident label. Even state-of-the-art academic systems (NADI 2024)
+  only reach ~50% F1 on this task; treat any result as a rough signal,
+  not a fact. See `benchmark/README.md` for measured validation accuracy
+  and an important caveat about that number's current reliability.
+- **`check_content_warnings()`** — advisory-only heuristic flags for
+  religious/legal/medical content sensitivity. **Never call this
+  automatically as part of a normalization pipeline** — it's opt-in by
+  design. If you use it in a multi-turn session, **do not repeat the
+  same warning category to the user more than once per session**: this
+  function is stateless (no built-in repeat-suppression) precisely so
+  that decision stays with you, the caller — repeating the same warning
+  on every call trains users to ignore it (documented "alert fatigue"
+  effect, with override rates of 49-96% for undifferentiated alerts in
+  studied domains). Track what you've already shown in your own
+  session state.
 
 ## Token counts are tokenizer-specific
 
