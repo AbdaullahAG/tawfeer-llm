@@ -2,6 +2,11 @@
 reporting for LLM API calls.
 """
 
+# NOTE: ar_tokenwise.formulaic exists as an explicit stub (all functions
+# raise NotImplementedError) and is deliberately NOT imported/exported
+# here -- it is blocked on real usage data, not forgotten. See its
+# module docstring and README.md's "Roadmap" section.
+
 from ar_tokenwise.benchmark import (
     BenchmarkCategory,
     BenchmarkResult,
@@ -10,6 +15,7 @@ from ar_tokenwise.benchmark import (
     render_markdown_table,
     run_benchmark,
 )
+from ar_tokenwise.cache_keys import canonicalize_for_cache_key, generate_cache_key
 from ar_tokenwise.chunking import chunk_text
 from ar_tokenwise.dialect import (
     DetectionStatus,
@@ -59,5 +65,7 @@ __all__ = [
     "ContentWarning",
     "ContentCategory",
     "ConfidenceLevel",
+    "generate_cache_key",
+    "canonicalize_for_cache_key",
     "__version__",
 ]

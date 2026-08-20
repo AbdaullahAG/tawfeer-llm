@@ -33,6 +33,13 @@ pip install -e ".[tokenizers]"
 The `tokenizers` extra pulls in `tiktoken` for real token-count reports
 and benchmarks; core normalization works without it.
 
+For the optional LiteLLM/LangChain/LlamaIndex integrations (see
+[Integrations](#integrations) below), install:
+
+```bash
+pip install -e ".[tokenizers,integrations]"
+```
+
 ## Quick start
 
 ```python
@@ -44,6 +51,50 @@ optimized = normalize(text, level=NormalizationLevel.LIGHT)
 report = report_savings(text, optimized, cost_per_million_tokens=3.0)
 print(report.tokens_saved, report.percent_saved, report.estimated_cost_savings_usd)
 ```
+
+## Beyond normalization
+
+The core library also includes (all documented in-module and covered by
+tests -- see each module's docstring for full details and caveats):
+
+```python
+from ar_tokenwise import (
+    chunk_text,             # sentence-boundary-aware chunking for RAG
+    report_mixed_fertility, # separate fertility for Arabic/Latin/Arabizi text
+    detect_dialect,         # EXPERIMENTAL dialect signal (probability, not a fact)
+    check_content_warnings, # advisory-only religious/legal/medical flags
+    generate_cache_key,     # stable cache/embedding key across diacritic variants
+)
+```
+
+**Read the module docstrings before using `detect_dialect()` or
+`check_content_warnings()`** -- both are heuristic, both document their
+accuracy limitations explicitly, and neither should be treated as a
+guarantee. `benchmark/README.md` has measured (not estimated) validation
+numbers for dialect detection, with an important caveat on their current
+reliability.
+
+## Integrations
+
+Optional, thin wrappers around the core library for popular frameworks —
+none are required to use `ar-tokenwise` directly. Install with
+`pip install ar-tokenwise[integrations]`.
+
+| Framework | File | What it does |
+|---|---|---|
+| LiteLLM | `integrations/litellm_plugin.py` | `async_pre_call_hook` that normalizes `messages` before the model call |
+| LangChain | `integrations/langchain_wrapper.py` | `BaseDocumentTransformer` that normalizes `Document.page_content` |
+| LlamaIndex | `integrations/llamaindex_wrapper.py` | `TransformComponent` that normalizes node text in an ingestion pipeline |
+
+Each file works standalone without its target framework installed too —
+the core normalization function in each (`normalize_messages()`,
+`normalize_page_contents()`, `normalize_node_texts()`) has no framework
+dependency; only the class wrapper around it does.
+
+**If you use these for RAG indexing:** apply the same normalization
+level to queries at retrieval time, or see `generate_cache_key()` above
+for exact-duplicate cache-key matching — see SKILL.md's "RAG / retrieval
+consistency warning" for why this matters.
 
 ## How this compares
 
@@ -71,15 +122,30 @@ directional, not final claims. Run it yourself:
 python benchmark/run_benchmark.py
 ```
 
+`benchmark/` also has a separate dialect-detection validation corpus and
+runner — see `benchmark/README.md` for both, including an important
+caveat on the dialect-detection accuracy number's current reliability.
+
 ## Roadmap
 
-- **v1 (current):** conservative normalization, transparent token-delta
+- **v1 (shipped):** conservative normalization, transparent token-delta
   reporting, reproducible fertility benchmark.
-- **v2:** dialect detection (experimental), mixed-text handling, safety
-  modes for sensitive registers (legal/religious/medical), RAG chunking helper.
-- **v3:** formulaic-expression compression, cache-key normalization,
-  LiteLLM/LangChain/LlamaIndex integrations.
-  
+- **v2 (shipped):** dialect detection (experimental), mixed-text and
+  Arabizi handling, advisory content-sensitivity warnings, RAG chunking
+  helper.
+- **v3 (shipped, partial):** cache-key generation, LiteLLM/LangChain/
+  LlamaIndex integrations.
+  - **Not yet built: formulaic-expression compression.** This needs
+    real usage data (common stock phrases/openings actually seen in
+    production Arabic text) to build a marker dictionary responsibly --
+    building it now, without that data, would mean guessing at patterns
+    instead of measuring them, which conflicts with this project's
+    "real numbers, not assumptions" approach used everywhere else. It
+    stays deliberately unbuilt until real usage data exists, not
+    forgotten.
+- **Not yet done (non-code):** publish to PyPI. Currently install-from-
+  source only (see Install above).
+
 ## Limitations & honest expectations
 
 - **Diacritized religious/liturgical text** (Quranic verses, Hadith)
@@ -92,8 +158,14 @@ python benchmark/run_benchmark.py
 - **Reported token counts are tokenizer-specific.** The default counter
   uses tiktoken's `o200k_base` encoding (GPT-4o family) as a proxy — it
   is not the exact tokenizer for every model.
-- **No mixed-text or dialect-aware handling in v1** — planned for v2,
-  see the Roadmap above.
+- **`detect_dialect()` is a heuristic with a low methodological ceiling**
+  — even state-of-the-art academic systems (NADI 2024) only reach ~50%
+  F1 on this task. Treat any result as a rough signal, not a fact.
+- **`check_content_warnings()` is advisory only** and never blocks or
+  modifies text — a false negative (missing sensitive content) is
+  possible. It is opt-in and stateless by design; see SKILL.md for
+  guidance on avoiding repeated-warning fatigue in your own session
+  logic.
 
 ## License
 
