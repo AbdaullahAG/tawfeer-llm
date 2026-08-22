@@ -64,7 +64,23 @@ from ar_tokenwise import (
     detect_dialect,         # EXPERIMENTAL dialect signal (probability, not a fact)
     check_content_warnings, # advisory-only religious/legal/medical flags
     generate_cache_key,     # stable cache/embedding key across diacritic variants
+    optimize_for_caching,   # reorder prompt segments for provider prompt caching
 )
+```
+
+**Prompt caching** (Anthropic/OpenAI etc.) requires an identical, unchanged
+prefix across requests — label your prompt pieces as stable/dynamic and
+this reorders them so the stable content forms one shared prefix:
+
+```python
+from ar_tokenwise import PromptSegment, optimize_for_caching, to_anthropic_cache_blocks
+
+segments = [
+    PromptSegment(content=system_prompt, stable=True),
+    PromptSegment(content=user_message, stable=False),
+]
+optimized = optimize_for_caching(segments)
+blocks = to_anthropic_cache_blocks(optimized)  # ready for the `content` of a message
 ```
 
 **Read the module docstrings before using `detect_dialect()` or
@@ -115,7 +131,8 @@ already call.
 
 See [`benchmark/`](./benchmark) for the reproducible fertility benchmark
 across MSA, regional dialects, mixed Arabic-English text, and formal/legal
-register. **Current corpus is a 27-sentence seed set** — early numbers are
+register. **Current corpus is a 242-sentence hand-authored set** — still
+curated, not large-scale/naturally-occurring, so treat numbers as
 directional, not final claims. Run it yourself:
 
 ```bash
