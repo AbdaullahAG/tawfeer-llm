@@ -38,6 +38,14 @@ tokenizers = ["tiktoken>=0.7"]
 # far that per-integration extras would add naming complexity without
 # real benefit yet.
 integrations = ["litellm>=1.40", "langchain-core>=0.3", "llama-index-core>=0.11"]
+# Only needed for src/ar_tokenwise/provider_counters.py -- these call a
+# real network API per token-count invocation (see that module's
+# docstring), unlike the local-after-first-download `tokenizers` extra
+# above, which is why they're a separate group rather than bundled into
+# `tokenizers`: installing this pulls in provider SDKs and implies you
+# have API credentials for them, a materially different commitment than
+# tiktoken's offline-after-first-use model.
+providers = ["anthropic>=0.40", "google-genai>=0.3"]
 dev = ["pytest>=8.0", "pytest-cov>=5.0", "anyio>=4.0"]
 
 [tool.hatch.build.targets.wheel]

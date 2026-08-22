@@ -1,3 +1,4 @@
+# src/ar_tokenwise/__init__.py
 """ar-tokenwise: conservative Arabic text normalization and token-usage
 reporting for LLM API calls.
 """
@@ -30,6 +31,13 @@ from ar_tokenwise.mixed_text import (
     report_mixed_fertility,
 )
 from ar_tokenwise.normalize import NormalizationLevel, normalize
+from ar_tokenwise.prompt_caching import (
+    CacheOptimizedPrompt,
+    PromptSegment,
+    optimize_for_caching,
+    to_anthropic_cache_blocks,
+)
+from ar_tokenwise.provider_counters import get_anthropic_counter, get_gemini_counter
 from ar_tokenwise.report import TokenReport, get_default_counter, report_savings
 from ar_tokenwise.safety_modes import (
     ConfidenceLevel,
@@ -67,5 +75,11 @@ __all__ = [
     "ConfidenceLevel",
     "generate_cache_key",
     "canonicalize_for_cache_key",
+    "PromptSegment",
+    "CacheOptimizedPrompt",
+    "optimize_for_caching",
+    "to_anthropic_cache_blocks",
+    "get_anthropic_counter",
+    "get_gemini_counter",
     "__version__",
 ]
