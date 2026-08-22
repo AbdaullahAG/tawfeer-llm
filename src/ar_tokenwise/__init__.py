@@ -45,6 +45,7 @@ from ar_tokenwise.safety_modes import (
     ContentWarning,
     check_content_warnings,
 )
+from ar_tokenwise.smart_prepare import SmartPrepareResult, smart_prepare
 
 __version__ = "0.1.0"
 
@@ -81,5 +82,7 @@ __all__ = [
     "to_anthropic_cache_blocks",
     "get_anthropic_counter",
     "get_gemini_counter",
+    "smart_prepare",
+    "SmartPrepareResult",
     "__version__",
 ]
