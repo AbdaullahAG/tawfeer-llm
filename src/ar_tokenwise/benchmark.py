@@ -14,8 +14,9 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
+from ar_tokenwise._internal import compute_fertility, count_words
 from ar_tokenwise.normalize import NormalizationLevel, normalize
-from ar_tokenwise.report import TokenCounter, _count_words, _fertility
+from ar_tokenwise.report import TokenCounter
 
 # Guard against accidentally loading a pathological number of corpus lines.
 DEFAULT_MAX_ENTRIES = 10_000
@@ -95,6 +96,12 @@ def load_corpus(path: str | Path, max_entries: int = DEFAULT_MAX_ENTRIES) -> lis
             if field not in raw:
                 raise ValueError(f"Corpus line {line_number}: missing field '{field}'")
 
+        if not isinstance(raw["text"], str):
+            raise ValueError(
+                f"Corpus line {line_number}: 'text' must be a string, "
+                f"got {type(raw['text']).__name__}"
+            )
+
         if not raw["text"].strip():
             raise ValueError(f"Corpus line {line_number}: empty text")
 
@@ -150,14 +157,14 @@ def run_benchmark(
         optimized_fertilities = []
 
         for entry in group_entries:
-            words = _count_words(entry.text)
+            words = count_words(entry.text)
             original_tokens = counter(entry.text)
-            original_fertilities.append(_fertility(original_tokens, words))
+            original_fertilities.append(compute_fertility(original_tokens, words))
 
             optimized_text = normalize(entry.text, level=level)
-            optimized_words = _count_words(optimized_text)
+            optimized_words = count_words(optimized_text)
             optimized_tokens = counter(optimized_text)
-            optimized_fertilities.append(_fertility(optimized_tokens, optimized_words))
+            optimized_fertilities.append(compute_fertility(optimized_tokens, optimized_words))
 
         avg_original = sum(original_fertilities) / len(original_fertilities)
         avg_optimized = sum(optimized_fertilities) / len(optimized_fertilities)

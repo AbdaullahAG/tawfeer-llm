@@ -1,3 +1,4 @@
+
 """Unit tests for ar_tokenwise.benchmark."""
 
 from pathlib import Path
@@ -64,6 +65,18 @@ def test_load_corpus_empty_text_raises(tmp_path: Path) -> None:
     corpus_file = tmp_path / "corpus.jsonl"
     corpus_file.write_text('{"id": "a", "category": "msa", "text": "  "}\n', encoding="utf-8")
     with pytest.raises(ValueError, match="empty text"):
+        load_corpus(corpus_file)
+
+
+def test_load_corpus_non_string_text_raises_clean_value_error(tmp_path: Path) -> None:
+    # Regression test for a real, reproduced bug: a JSON "text" field
+    # that isn't a string (e.g. a number) previously crashed with a raw
+    # AttributeError ('int' object has no attribute 'strip') instead of
+    # the module's own documented ValueError contract for malformed
+    # corpus lines.
+    corpus_file = tmp_path / "corpus.jsonl"
+    corpus_file.write_text('{"id": "a", "category": "msa", "text": 12345}\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="'text' must be a string"):
         load_corpus(corpus_file)
 
 
