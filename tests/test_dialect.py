@@ -1,4 +1,3 @@
-# tests/test_dialect.py
 """Unit tests for ar_tokenwise.dialect."""
 
 import pytest

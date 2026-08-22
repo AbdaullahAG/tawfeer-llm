@@ -20,6 +20,38 @@ from __future__ import annotations
 import re
 
 
+# Matches runs of whitespace to split text into words for fertility
+# (tokens-per-word) calculation. Word boundaries by whitespace are a
+# reasonable, dependency-free approximation for Arabic and mixed text.
+# Single quantifier, no nesting -- linear in input length, no ReDoS risk.
+_WHITESPACE_PATTERN = re.compile(r"\s+")
+
+
+def count_words(text: str) -> int:
+    """Count words by whitespace splitting. Empty text has 0 words.
+
+    Shared by report.py, mixed_text.py, and benchmark.py -- moved here
+    (from being a private report.py helper reached into by the other two
+    modules) so a future change to this logic can't silently break
+    modules that had no import-time signal they depended on it.
+    """
+    stripped = text.strip()
+    if not stripped:
+        return 0
+    return len(_WHITESPACE_PATTERN.split(stripped))
+
+
+def compute_fertility(tokens: int, words: int) -> float:
+    """Tokens per word. Returns 0.0 for empty text rather than dividing by zero.
+
+    Shared by report.py, mixed_text.py, and benchmark.py -- see
+    :func:`count_words` for why this lives here instead of in report.py.
+    """
+    if words == 0:
+        return 0.0
+    return tokens / words
+
+
 def compile_marker_pattern(marker: str) -> re.Pattern[str]:
     """Compile a word-boundary-aware regex for a single marker phrase.
 
