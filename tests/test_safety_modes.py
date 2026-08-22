@@ -10,6 +10,9 @@ from ar_tokenwise.safety_modes import (
 )
 
 
+# --- required minimum cases: empty / oversized / wrong type -----------
+
+
 def test_check_empty_text_returns_no_warnings() -> None:
     assert check_content_warnings("") == []
 
@@ -24,14 +27,22 @@ def test_check_non_str_input_raises_type_error() -> None:
         check_content_warnings(123)  # type: ignore[arg-type]
 
 
+# --- no-signal / ordinary text ------------------------------------------
+
+
 def test_check_ordinary_text_returns_no_warnings() -> None:
     result = check_content_warnings("رحت عالسوق اليوم واشتريت بعض الأغراض")
     assert result == []
 
 
 def test_check_casual_religious_phrase_does_not_trigger_warning() -> None:
+    # "ان شاء الله" and "الحمدلله" are everyday conversational fillers,
+    # not indicators of Quranic/Hadith-sensitive content -- must NOT flag.
     result = check_content_warnings("ان شاء الله بكرة بشوفك، الحمدلله كله تمام")
     assert result == []
+
+
+# --- category detection and confidence escalation ------------------------
 
 
 def test_check_single_legal_marker_gives_low_confidence() -> None:
@@ -43,7 +54,7 @@ def test_check_single_legal_marker_gives_low_confidence() -> None:
 
 
 def test_check_two_legal_markers_gives_medium_confidence() -> None:
-    text = "هذا بند مهم بالعقد المبرم بيننا."
+    text = "هذا بند مهم، وهو ضمن الاتفاقية الموقعة."
     result = check_content_warnings(text)
     legal = [w for w in result if w.category is ContentCategory.LEGAL]
     assert len(legal) == 1
@@ -94,3 +105,13 @@ def test_check_diacritics_do_not_prevent_marker_match() -> None:
     result = check_content_warnings(text)
     legal = [w for w in result if w.category is ContentCategory.LEGAL]
     assert len(legal) == 1
+
+
+def test_check_ordinary_name_mention_does_not_trigger_legal_warning() -> None:
+    # Regression test for a real, reproduced bug: the LEGAL marker "بند"
+    # previously matched via plain substring inside "بندر" (a personal
+    # name), flagging entirely ordinary text as legally sensitive.
+    # Word-boundary matching must prevent this.
+    text = "التقيت اليوم بالسيد بندر في المطار وتحدثنا قليلا"
+    result = check_content_warnings(text)
+    assert result == []
