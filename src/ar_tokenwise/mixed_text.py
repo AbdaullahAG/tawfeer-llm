@@ -5,10 +5,9 @@ names, technical terms) and digits (either script). It also very commonly
 uses "Arabizi" -- Arabic written phonetically in Latin letters, with
 digits standing in for Arabic sounds that have no Latin equivalent
 (2=hamza, 3=ain, 5=kha, 6=ta, 7=ha, 8=ghain/qaf, 9=sad -- e.g. "7abibi"
-for "habibi", "3andi" for "3andi"/"عندي"). This is extremely common in
-everyday Arabic chat, SMS, and social media, and was previously
-misclassified as plain non-Arabic text since it uses no Arabic-script
-characters at all.
+for "habibi", "3andi" for "عندي"). This is extremely common in everyday
+Arabic chat, SMS, and social media, and was previously misclassified as
+plain non-Arabic text since it uses no Arabic-script characters at all.
 
 Word classification ignores plain digit runs (Arabic-indic or Latin, 2+
 digits together, e.g. product model numbers or years) entirely, so a word
@@ -29,17 +28,14 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 
+from ar_tokenwise._internal import compute_fertility
 from ar_tokenwise.normalize import DEFAULT_MAX_LENGTH
-from ar_tokenwise.report import TokenCounter, _fertility
+from ar_tokenwise.report import TokenCounter
 
 _ARABIC_LETTER_PATTERN = re.compile(r"[\u0621-\u063A\u0641-\u064A\u066E\u066F\u0671-\u06D3]")
 _LATIN_LETTER_PATTERN = re.compile(r"[A-Za-z]")
 _WHITESPACE_SPLIT_PATTERN = re.compile(r"\s+")
 
-# Standard Arabizi chat-alphabet digit substitutions (widely documented,
-# not standardized to a single authority, but this set is the common core
-# across Egyptian/Levantine/Gulf usage). 1, 4, 0 are deliberately excluded
-# -- they are not conventionally used as Arabizi letter substitutes.
 _ARABIZI_DIGITS = frozenset("2356789")
 
 
@@ -47,12 +43,10 @@ class WordCategory(str, Enum):
     """Script classification for a single whitespace-delimited word.
 
     ARABIC: contains Arabic letters, no Latin letters.
-    NON_ARABIC: contains no Arabic letters and no Arabizi digit signal
-        (Latin text, digits-only, punctuation-only all fall here).
+    NON_ARABIC: contains no Arabic letters and no Arabizi digit signal.
     MIXED: contains both Arabic and Latin letters in the same word.
     ARABIZI: Latin letters with an isolated Arabizi-convention digit
-        adjacent to a letter (see module docstring) -- likely Arabic
-        written phonetically in Latin script, not actual non-Arabic text.
+        adjacent to a letter.
     """
 
     ARABIC = "arabic"
@@ -63,14 +57,7 @@ class WordCategory(str, Enum):
 
 @dataclass(frozen=True)
 class MixedTextReport:
-    """Per-script-category word counts and fertility for a text.
-
-    Fertility values are ESTIMATES derived from the caller-supplied
-    counter re-tokenizing each category's reconstructed substring in
-    isolation -- not an exact per-word token attribution from the
-    original combined tokenization. Treat them as representative, not
-    an exact accounting that sums to the whole text's true token count.
-    """
+    """Per-script-category word counts and fertility for a text."""
 
     total_words: int
     arabic_word_count: int
@@ -84,12 +71,7 @@ class MixedTextReport:
 
 
 def _has_arabizi_digit_signal(word: str) -> bool:
-    """Detect an isolated single Arabizi-convention digit next to a letter.
-
-    A digit counts as a signal only if it is NOT part of a longer digit
-    run (e.g. "15", "2026" are excluded as likely model numbers/years)
-    and is immediately adjacent to a Latin letter on at least one side.
-    """
+    """Detect an isolated single Arabizi-convention digit next to a letter."""
     i = 0
     n = len(word)
     while i < n:
@@ -109,20 +91,7 @@ def _has_arabizi_digit_signal(word: str) -> bool:
 
 
 def classify_word(word: str) -> WordCategory:
-    """Classify a single word by Arabic/Latin/Arabizi content.
-
-    Digit runs of 2+ (any script) are ignored for classification, aside
-    from the Arabizi single-digit signal described in the module
-    docstring; only actual Arabic vs. Latin letters, and that Arabizi
-    signal, matter.
-
-    Args:
-        word: A single word (no internal whitespace expected, but not
-            enforced -- classification still works on any string).
-
-    Returns:
-        The word's :class:`WordCategory`.
-    """
+    """Classify a single word by Arabic/Latin/Arabizi content."""
     has_arabic = bool(_ARABIC_LETTER_PATTERN.search(word))
     has_latin = bool(_LATIN_LETTER_PATTERN.search(word))
 
@@ -136,12 +105,7 @@ def classify_word(word: str) -> WordCategory:
 
 
 def _validate_input(text: str, max_length: int) -> None:
-    """Validate input before any processing.
-
-    Raises:
-        TypeError: if ``text`` is not a ``str``.
-        ValueError: if ``text`` exceeds ``max_length`` characters.
-    """
+    """Validate input before any processing."""
     if not isinstance(text, str):
         raise TypeError(f"report_mixed_fertility() expects str, got {type(text).__name__}")
     if len(text) > max_length:
@@ -156,22 +120,7 @@ def report_mixed_fertility(
     counter: TokenCounter,
     max_length: int = DEFAULT_MAX_LENGTH,
 ) -> MixedTextReport:
-    """Report Arabic/non-Arabic/Arabizi fertility separately for mixed text.
-
-    Args:
-        text: Input text. Empty string returns a report of all zeros.
-        counter: Token-counting function (see ``ar_tokenwise.report``).
-        max_length: Maximum accepted input length in characters, used as
-            a size-based safety guard. Raises if exceeded.
-
-    Returns:
-        A :class:`MixedTextReport`. Fertility for a category with zero
-        words in it is reported as 0.0 (not an error, not NaN).
-
-    Raises:
-        TypeError: if ``text`` is not a string.
-        ValueError: if ``text`` exceeds ``max_length``.
-    """
+    """Report Arabic/non-Arabic/Arabizi fertility separately for mixed text."""
     _validate_input(text, max_length)
 
     if text == "":
@@ -202,7 +151,7 @@ def report_mixed_fertility(
         if not bucket_words:
             return 0.0
         reconstructed = " ".join(bucket_words)
-        return _fertility(counter(reconstructed), len(bucket_words))
+        return compute_fertility(counter(reconstructed), len(bucket_words))
 
     return MixedTextReport(
         total_words=len(words),

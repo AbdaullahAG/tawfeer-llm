@@ -9,16 +9,12 @@ Guessing either would produce numbers that look precise but are not.
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from typing import Callable
 
-TokenCounter = Callable[[str], int]
+from ar_tokenwise._internal import compute_fertility, count_words
 
-# Matches runs of whitespace to split text into words for fertility
-# (tokens-per-word) calculation. Word boundaries by whitespace are a
-# reasonable, dependency-free approximation for Arabic and mixed text.
-_WHITESPACE_PATTERN = re.compile(r"\s+")
+TokenCounter = Callable[[str], int]
 
 
 @dataclass(frozen=True)
@@ -32,21 +28,6 @@ class TokenReport:
     original_fertility: float  # tokens per word, original text
     optimized_fertility: float  # tokens per word, optimized text
     estimated_cost_savings_usd: float | None
-
-
-def _count_words(text: str) -> int:
-    """Count words by whitespace splitting. Empty text has 0 words."""
-    stripped = text.strip()
-    if not stripped:
-        return 0
-    return len(_WHITESPACE_PATTERN.split(stripped))
-
-
-def _fertility(tokens: int, words: int) -> float:
-    """Tokens per word. Returns 0.0 for empty text rather than dividing by zero."""
-    if words == 0:
-        return 0.0
-    return tokens / words
 
 
 def get_default_counter(encoding_name: str = "o200k_base") -> TokenCounter:
@@ -115,8 +96,8 @@ def report_savings(
         (tokens_saved / original_tokens) * 100.0 if original_tokens > 0 else 0.0
     )
 
-    original_fertility = _fertility(original_tokens, _count_words(original))
-    optimized_fertility = _fertility(optimized_tokens, _count_words(optimized))
+    original_fertility = compute_fertility(original_tokens, count_words(original))
+    optimized_fertility = compute_fertility(optimized_tokens, count_words(optimized))
 
     estimated_cost_savings_usd = (
         (tokens_saved / 1_000_000) * cost_per_million_tokens
