@@ -26,6 +26,26 @@ This is a heuristic based on small, hand-authored marker lists -- not a
 trained classifier. False negatives (missing an actually sensitive text)
 and false positives (flagging ordinary text) are both possible. Treat
 results as a hint to review, never as a guarantee of safety.
+
+Marker matching is WORD-BOUNDARY-AWARE (via ar_tokenwise._internal), not
+plain substring matching. Plain substring matching previously caused a
+real, reproduced false-positive bug: the LEGAL marker "بند" matched
+inside "بندر" (a personal name / place name), flagging entirely ordinary
+text mentioning someone named Bandar as legally sensitive.
+
+KNOWN LIMITATION of word-boundary matching for Arabic: single-letter
+prefixes commonly fused directly onto the next word without a space
+(و "and", ب "by/with", ل "for", ك "like", ف "so" -- e.g. "بالعقد" =
+"ب" + "العقد" with no space) will NOT match a marker for the base word,
+since \b does not recognize a boundary between two Arabic letters even
+when one is a grammatical prefix. This trades a small number of missed
+matches (false negatives) for eliminating the substring false-positive
+bug above -- a deliberate choice, since this module already documents
+that it can miss real sensitive content (false negatives are an
+accepted, disclosed limitation) but should not cry wolf on ordinary text
+(false positives directly cause the alert-fatigue problem discussed
+above). Proper handling would need real Arabic morphological analysis,
+which is out of scope for this lightweight, dependency-free module.
 """
 
 from __future__ import annotations
@@ -33,13 +53,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from ar_tokenwise._internal import (
+    compile_markers_by_category,
+    count_marker_matches,
+    validate_text_input,
+)
 from ar_tokenwise.normalize import DEFAULT_MAX_LENGTH, NormalizationLevel, normalize
 
 
 class ContentCategory(str, Enum):
     """Content-sensitivity categories this module can flag."""
 
-    RELIGIOUS = "religious"  # Quranic/Hadith-style quotation, not casual religious speech
+    RELIGIOUS = "religious"
     LEGAL = "legal"
     MEDICAL = "medical"
 
@@ -47,9 +72,9 @@ class ContentCategory(str, Enum):
 class ConfidenceLevel(str, Enum):
     """How many distinct markers matched -- not a calibrated probability."""
 
-    LOW = "low"  # 1 marker matched
-    MEDIUM = "medium"  # 2 markers matched
-    HIGH = "high"  # 3+ markers matched
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
 
 
 @dataclass(frozen=True)
@@ -60,11 +85,6 @@ class ContentWarning:
     confidence: ConfidenceLevel
     matched_marker_count: int
 
-
-# --- Marker lists (seed, hand-authored) ------------------------------------
-# RELIGIOUS markers deliberately target signs of actual Quranic/Hadith
-# quotation or formal religious-legal (fiqh) text, NOT everyday religious
-# expressions common in casual Arabic speech (see module docstring).
 
 _RELIGIOUS_MARKERS = [
     "قال تعالى", "صلى الله عليه وسلم", "روى عن", "رواه", "سورة", "آية",
@@ -91,6 +111,9 @@ _MARKERS_BY_CATEGORY: dict[ContentCategory, list[str]] = {
     ContentCategory.MEDICAL: _MEDICAL_MARKERS,
 }
 
+# Compiled once at import time, not per-call -- see _internal.py.
+_COMPILED_MARKERS_BY_CATEGORY = compile_markers_by_category(_MARKERS_BY_CATEGORY)
+
 
 def _confidence_for_count(count: int) -> ConfidenceLevel:
     """Map a matched-marker count to a confidence level."""
@@ -99,22 +122,6 @@ def _confidence_for_count(count: int) -> ConfidenceLevel:
     if count == 2:
         return ConfidenceLevel.MEDIUM
     return ConfidenceLevel.LOW
-
-
-def _validate_input(text: str, max_length: int) -> None:
-    """Validate input before any processing.
-
-    Raises:
-        TypeError: if ``text`` is not a ``str``.
-        ValueError: if ``text`` exceeds ``max_length`` characters.
-    """
-    if not isinstance(text, str):
-        raise TypeError(f"check_content_warnings() expects str, got {type(text).__name__}")
-    if len(text) > max_length:
-        raise ValueError(
-            f"Input length {len(text)} exceeds max_length={max_length}. "
-            "Split the text or raise max_length explicitly if intentional."
-        )
 
 
 def check_content_warnings(
@@ -142,16 +149,17 @@ def check_content_warnings(
         TypeError: if ``text`` is not a string.
         ValueError: if ``text`` exceeds ``max_length``.
     """
-    _validate_input(text, max_length)
+    validate_text_input(text, max_length, caller_name="check_content_warnings")
 
     if text == "":
         return []
 
     matching_text = normalize(text, level=NormalizationLevel.LIGHT)
 
+    counts = count_marker_matches(matching_text, _COMPILED_MARKERS_BY_CATEGORY)
+
     warnings: list[ContentWarning] = []
-    for category, markers in _MARKERS_BY_CATEGORY.items():
-        count = sum(1 for marker in markers if marker in matching_text)
+    for category, count in counts.items():
         if count > 0:
             warnings.append(
                 ContentWarning(

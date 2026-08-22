@@ -19,6 +19,20 @@ Design choices driven by that ceiling:
 - Marker lists are a small, documented "seed" set (see MARKER LISTS below),
   not derived from or validated against any licensed dataset (e.g. NADI's
   Twitter-sourced data, which has restricted redistribution terms).
+- Marker matching is WORD-BOUNDARY-AWARE (via ar_tokenwise._internal), not
+  plain substring matching. Plain substring matching previously caused a
+  real, reproduced false-positive bug: the Egyptian marker "مش" matched
+  inside "لمشوار" ("for an errand"), and this module's own MSA marker
+  list had a partial, inconsistent workaround (trailing spaces on some
+  entries) that was never applied to the other three lists. That
+  workaround is gone now that matching is correctly boundary-aware
+  everywhere.
+- KNOWN LIMITATION: word-boundary matching will miss a marker fused to a
+  single-letter Arabic prefix with no space (و/ب/ل/ك/ف -- e.g. "بالحين"
+  won't match the Gulf marker "الحين"). This trades some missed matches
+  for eliminating the substring false-positive bug above -- see
+  safety_modes.py's module docstring for the same trade-off, discussed
+  there in more detail.
 
 Measured accuracy: see benchmark/run_dialect_validation.py and its output
 in benchmark/results/dialect_validation.md -- run against a hand-labeled
@@ -31,6 +45,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from ar_tokenwise._internal import (
+    compile_markers_by_category,
+    count_marker_matches,
+    validate_text_input,
+)
 from ar_tokenwise.normalize import DEFAULT_MAX_LENGTH, NormalizationLevel, normalize
 
 DEFAULT_MIN_WORDS = 5
@@ -69,12 +88,6 @@ class DialectDetectionResult:
     distribution: dict[DialectCategory, float] | None
 
 
-# --- Marker lists (seed, hand-authored, not derived from any licensed
-# dataset) -----------------------------------------------------------------
-# These are approximate, non-exhaustive, and grouped as broad regional
-# umbrellas (not precise per-country boundaries) -- consistent with the
-# documented overlap between closely related dialect groups.
-
 _GULF_MARKERS = [
     "شلون", "شلونك", "وش", "وشلون", "أبغى", "ابغى", "أبي", "ابي", "زين",
     "الحين", "هالحين", "وايد", "مب", "شنو", "عاد", "يبيله", "يبغاله",
@@ -102,9 +115,14 @@ _MAGHREBI_MARKERS = [
     "بحال",
 ]
 
+# NOTE: trailing spaces previously used on some entries here ("إن ",
+# "أن ", "إذ ", "لكن ", "سوف ", "قد ") as a partial workaround for the
+# substring-matching bug have been removed -- word-boundary matching
+# (see module docstring) now handles this correctly and consistently
+# for every marker list, so the workaround is no longer needed.
 _MSA_MARKERS = [
-    "إن ", "أن ", "الذي", "التي", "اللذان", "اللتان", "حيث", "بينما",
-    "إذ ", "لكن ", "سوف ", "قد ", "ينبغي", "وفقا", "نظرا", "بالإضافة",
+    "إن", "أن", "الذي", "التي", "اللذان", "اللتان", "حيث", "بينما",
+    "إذ", "لكن", "سوف", "قد", "ينبغي", "وفقا", "نظرا", "بالإضافة",
     "لذلك", "فإن", "كما أن",
 ]
 
@@ -116,21 +134,8 @@ _MARKERS_BY_CATEGORY: dict[DialectCategory, list[str]] = {
     DialectCategory.MAGHREBI: _MAGHREBI_MARKERS,
 }
 
-
-def _validate_input(text: str, max_length: int) -> None:
-    """Validate input before any processing.
-
-    Raises:
-        TypeError: if ``text`` is not a ``str``.
-        ValueError: if ``text`` exceeds ``max_length`` characters.
-    """
-    if not isinstance(text, str):
-        raise TypeError(f"detect_dialect() expects str, got {type(text).__name__}")
-    if len(text) > max_length:
-        raise ValueError(
-            f"Input length {len(text)} exceeds max_length={max_length}. "
-            "Split the text or raise max_length explicitly if intentional."
-        )
+# Compiled once at import time, not per-call -- see _internal.py.
+_COMPILED_MARKERS_BY_CATEGORY = compile_markers_by_category(_MARKERS_BY_CATEGORY)
 
 
 def detect_dialect(
@@ -159,7 +164,7 @@ def detect_dialect(
         TypeError: if ``text`` is not a string.
         ValueError: if ``text`` exceeds ``max_length``.
     """
-    _validate_input(text, max_length)
+    validate_text_input(text, max_length, caller_name="detect_dialect")
 
     word_count = len(text.split())
     if word_count < min_words:
@@ -169,15 +174,9 @@ def detect_dialect(
             distribution=None,
         )
 
-    # Diacritic-insensitive matching via the existing LIGHT normalizer.
-    # The result is used only internally for marker matching; the
-    # caller's original text is never modified or returned.
     matching_text = normalize(text, level=NormalizationLevel.LIGHT)
 
-    raw_counts: dict[DialectCategory, int] = {
-        category: sum(1 for marker in markers if marker in matching_text)
-        for category, markers in _MARKERS_BY_CATEGORY.items()
-    }
+    raw_counts = count_marker_matches(matching_text, _COMPILED_MARKERS_BY_CATEGORY)
     total = sum(raw_counts.values())
 
     if total == 0:
