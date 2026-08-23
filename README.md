@@ -40,6 +40,13 @@ For the optional LiteLLM/LangChain/LlamaIndex integrations (see
 pip install -e ".[tokenizers,integrations]"
 ```
 
+For exact Anthropic/Gemini token counters (see
+[Beyond normalization](#beyond-normalization) below), install:
+
+```bash
+pip install -e ".[tokenizers,providers]"
+```
+
 ## Quick start
 
 ```python
@@ -63,8 +70,11 @@ from ar_tokenwise import (
     report_mixed_fertility, # separate fertility for Arabic/Latin/Arabizi text
     detect_dialect,         # EXPERIMENTAL dialect signal (probability, not a fact)
     check_content_warnings, # advisory-only religious/legal/medical flags
+    smart_prepare,          # opt-in wrapper: skips normalization when a warning fires
     generate_cache_key,     # stable cache/embedding key across diacritic variants
     optimize_for_caching,   # reorder prompt segments for provider prompt caching
+    get_anthropic_counter,  # exact token counts via Anthropic's own API (network call per use)
+    get_gemini_counter,     # exact token counts via Gemini's own API (network call per use)
 )
 ```
 
@@ -109,8 +119,8 @@ dependency; only the class wrapper around it does.
 
 **If you use these for RAG indexing:** apply the same normalization
 level to queries at retrieval time, or see `generate_cache_key()` above
-for exact-duplicate cache-key matching — see SKILL.md's "RAG / retrieval
-consistency warning" for why this matters.
+for exact-duplicate cache-key matching — see `skill/SKILL.md`'s "RAG /
+retrieval consistency warning" for why this matters.
 
 ## How this compares
 
@@ -140,8 +150,11 @@ python benchmark/run_benchmark.py
 ```
 
 `benchmark/` also has a separate dialect-detection validation corpus and
-runner — see `benchmark/README.md` for both, including an important
-caveat on the dialect-detection accuracy number's current reliability.
+runner, plus a reusable corpus quality-check tool
+(`check_corpus_quality.py`, flags near-duplicate sentences and
+cross-dialect content reuse) — see `benchmark/README.md` for all three,
+including an important caveat on the dialect-detection accuracy number's
+current reliability.
 
 ## Roadmap
 
@@ -150,8 +163,11 @@ caveat on the dialect-detection accuracy number's current reliability.
 - **v2 (shipped):** dialect detection (experimental), mixed-text and
   Arabizi handling, advisory content-sensitivity warnings, RAG chunking
   helper.
-- **v3 (shipped, partial):** cache-key generation, LiteLLM/LangChain/
-  LlamaIndex integrations.
+- **v3 (shipped):** cache-key generation, LiteLLM/LangChain/LlamaIndex
+  integrations, prompt-caching optimizer (`optimize_for_caching()`),
+  exact Anthropic/Gemini token counters, `smart_prepare()` convenience
+  wrapper, and a benchmark corpus expanded from 27 to 242 sentences
+  (with a reusable quality-check tool, `benchmark/check_corpus_quality.py`).
   - **Not yet built: formulaic-expression compression.** This needs
     real usage data (common stock phrases/openings actually seen in
     production Arabic text) to build a marker dictionary responsibly --
@@ -160,8 +176,10 @@ caveat on the dialect-detection accuracy number's current reliability.
     "real numbers, not assumptions" approach used everywhere else. It
     stays deliberately unbuilt until real usage data exists, not
     forgotten.
-- **Not yet done (non-code):** publish to PyPI. Currently install-from-
-  source only (see Install above).
+- **Not yet done (non-code):** publish to PyPI (checklist in
+  `PUBLISHING.md`). Currently install-from-source only (see Install
+  above). Publishing the benchmark corpus as an independent dataset
+  (e.g. HuggingFace) once it grows further via real contributions.
 
 ## Limitations & honest expectations
 
@@ -180,9 +198,19 @@ caveat on the dialect-detection accuracy number's current reliability.
   F1 on this task. Treat any result as a rough signal, not a fact.
 - **`check_content_warnings()` is advisory only** and never blocks or
   modifies text — a false negative (missing sensitive content) is
-  possible. It is opt-in and stateless by design; see SKILL.md for
-  guidance on avoiding repeated-warning fatigue in your own session
+  possible. It is opt-in and stateless by design; see `skill/SKILL.md`
+  for guidance on avoiding repeated-warning fatigue in your own session
   logic.
+- **`get_anthropic_counter()`/`get_gemini_counter()` call the provider's
+  API over the network on every single invocation** — unlike
+  `get_default_counter()`'s tiktoken (which only needs network once,
+  then computes locally), these have real per-call latency and require
+  that provider's API key. Fine for one-off reports/benchmarks; wrong
+  choice for a per-request hot path.
+- **`optimize_for_caching()` trusts your `stable`/`dynamic` labels
+  completely** — it has no way to verify them, and reordering
+  mislabeled segments can change your prompt's meaning. Only label
+  content stable if reordering it relative to the rest is genuinely safe.
 
 ## License
 
