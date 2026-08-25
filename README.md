@@ -1,51 +1,48 @@
-# tawfeer-llm (ar-tokenwise)
+<div align="center">
 
-Lightweight, conservative Arabic text normalization and transparent
-token-usage reporting for LLM API calls — works with any closed API
-(Claude, GPT, Gemini, ...), no model access or retraining required.
+# tawfeer-llm
 
-## Why this exists
+**Arabic text is expensive to tokenize. This library measures exactly how expensive — and safely trims the part that isn't necessary.**
 
-Arabic text is measurably more expensive to send to most LLM APIs:
-higher tokens-per-word (fertility) than English for the same content,
-which means higher cost, faster context exhaustion, and slower
-generation. This library reduces that overhead through safe,
-meaning-preserving text normalization, and reports the exact token
-savings — no estimates, no marketing numbers.
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
+[![Dependencies: none](https://img.shields.io/badge/core%20dependencies-zero-brightgreen.svg)](#install)
 
-**What this library does NOT claim:** normalization here does not claim
-to improve model comprehension or output quality through morphological
-awareness. Recent research (LREC 2026) found mixed evidence on whether
-tokenizer morphological alignment affects generation quality at all.
-This library's value proposition is strictly: lower cost, smaller
-context footprint, faster responses — all independently measurable.
+`pip install -e .` from source · works with Claude, GPT, Gemini, or any LLM API · no model access needed
+
+</div>
+
+---
+
+## Why
+
+Arabic uses more tokens per word than English for the same content on
+most tokenizers — higher cost, faster context exhaustion, slower
+responses. `tawfeer-llm` normalizes Arabic conservatively (never
+changes meaning) and tells you the **exact, measured** token savings —
+not a marketing estimate.
+
+**What it doesn't claim:** normalizing Arabic does not make a model
+*understand* it better. This library's entire value case is cost,
+context size, and speed — each independently measurable, none of it
+guesswork.
 
 ## Install
 
-**Not yet published to PyPI.** Install from source:
-
 ```bash
-git clone <this-repo-url>
-cd tawfeer-llm
+git clone <this-repo-url> && cd tawfeer-llm
 pip install -e ".[tokenizers]"
 ```
 
-The `tokenizers` extra pulls in `tiktoken` for real token-count reports
-and benchmarks; core normalization works without it.
-
-For the optional LiteLLM/LangChain/LlamaIndex integrations (see
-[Integrations](#integrations) below), install:
+<details>
+<summary>Optional extras (provider counters, framework integrations)</summary>
 
 ```bash
-pip install -e ".[tokenizers,integrations]"
+pip install -e ".[tokenizers,providers]"     # exact Anthropic/Gemini token counts
+pip install -e ".[tokenizers,integrations]"  # LiteLLM / LangChain / LlamaIndex wrappers
 ```
 
-For exact Anthropic/Gemini token counters (see
-[Beyond normalization](#beyond-normalization) below), install:
-
-```bash
-pip install -e ".[tokenizers,providers]"
-```
+</details>
 
 ## Quick start
 
@@ -59,158 +56,64 @@ report = report_savings(text, optimized, cost_per_million_tokens=3.0)
 print(report.tokens_saved, report.percent_saved, report.estimated_cost_savings_usd)
 ```
 
-## Beyond normalization
+> **Before you normalize anything:** Quranic/Hadith text, embedded ID
+> numbers, and text displayed verbatim to a user should **not** be
+> normalized — see [`skill/SKILL.md`](./skill/SKILL.md) for the full,
+> non-negotiable list.
 
-The core library also includes (all documented in-module and covered by
-tests -- see each module's docstring for full details and caveats):
+## What's included
 
-```python
-from ar_tokenwise import (
-    chunk_text,             # sentence-boundary-aware chunking for RAG
-    report_mixed_fertility, # separate fertility for Arabic/Latin/Arabizi text
-    detect_dialect,         # EXPERIMENTAL dialect signal (probability, not a fact)
-    check_content_warnings, # advisory-only religious/legal/medical flags
-    smart_prepare,          # opt-in wrapper: skips normalization when a warning fires
-    generate_cache_key,     # stable cache/embedding key across diacritic variants
-    optimize_for_caching,   # reorder prompt segments for provider prompt caching
-    get_anthropic_counter,  # exact token counts via Anthropic's own API (network call per use)
-    get_gemini_counter,     # exact token counts via Gemini's own API (network call per use)
-)
-```
+| | |
+|---|---|
+| 🧹 **Conservative normalization** | Strips decorative elongation & optional diacritics, unifies digit forms — never changes meaning |
+| 📊 **Transparent reporting** | Real before/after token counts against an actual tokenizer, never estimated |
+| ✂️ **RAG chunking** | Sentence-boundary-aware, token-budgeted `chunk_text()` |
+| 🔤 **Mixed-text & Arabizi handling** | Separate fertility for Arabic / Latin / Arabizi ("7abibi") words in the same text |
+| 🗣️ **Dialect signal** *(experimental)* | Probability distribution across MSA/Gulf/Egyptian/Levantine/Maghrebi — never a confident single label |
+| ⚠️ **Content-sensitivity warnings** | Advisory-only religious/legal/medical flags, opt-in, never automatic |
+| 🔑 **Cache-key generation** | Diacritized & undiacritized text hash to the same cache/embedding key |
+| ⚡ **Prompt-caching optimizer** | Reorders labeled prompt segments for Anthropic/OpenAI prompt-cache hits |
+| 🎯 **Exact provider token counts** | Real counts via Anthropic's and Gemini's own APIs, not an approximation |
+| 🔌 **Framework integrations** | Thin, optional wrappers for LiteLLM, LangChain, LlamaIndex |
 
-**Prompt caching** (Anthropic/OpenAI etc.) requires an identical, unchanged
-prefix across requests — label your prompt pieces as stable/dynamic and
-this reorders them so the stable content forms one shared prefix:
-
-```python
-from ar_tokenwise import PromptSegment, optimize_for_caching, to_anthropic_cache_blocks
-
-segments = [
-    PromptSegment(content=system_prompt, stable=True),
-    PromptSegment(content=user_message, stable=False),
-]
-optimized = optimize_for_caching(segments)
-blocks = to_anthropic_cache_blocks(optimized)  # ready for the `content` of a message
-```
-
-**Read the module docstrings before using `detect_dialect()` or
-`check_content_warnings()`** -- both are heuristic, both document their
-accuracy limitations explicitly, and neither should be treated as a
-guarantee. `benchmark/README.md` has measured (not estimated) validation
-numbers for dialect detection, with an important caveat on their current
-reliability.
-
-## Integrations
-
-Optional, thin wrappers around the core library for popular frameworks —
-none are required to use `ar-tokenwise` directly. Install with
-`pip install ar-tokenwise[integrations]`.
-
-| Framework | File | What it does |
-|---|---|---|
-| LiteLLM | `integrations/litellm_plugin.py` | `async_pre_call_hook` that normalizes `messages` before the model call |
-| LangChain | `integrations/langchain_wrapper.py` | `BaseDocumentTransformer` that normalizes `Document.page_content` |
-| LlamaIndex | `integrations/llamaindex_wrapper.py` | `TransformComponent` that normalizes node text in an ingestion pipeline |
-
-Each file works standalone without its target framework installed too —
-the core normalization function in each (`normalize_messages()`,
-`normalize_page_contents()`, `normalize_node_texts()`) has no framework
-dependency; only the class wrapper around it does.
-
-**If you use these for RAG indexing:** apply the same normalization
-level to queries at retrieval time, or see `generate_cache_key()` above
-for exact-duplicate cache-key matching — see `skill/SKILL.md`'s "RAG /
-retrieval consistency warning" for why this matters.
+Every item above is a heuristic where a heuristic is involved, and says
+so in its own docstring — see [`skill/REFERENCE.md`](./skill/REFERENCE.md)
+for full usage and every documented limitation before relying on one in
+production.
 
 ## How this compares
 
-| | Works with closed APIs (no retraining) | Arabic-specific | Reports token savings |
-|---|---|---|---|
-| **AraToken / aranizer** (alternative tokenizers) | ❌ requires model integration | ✅ | ❌ |
-| **PyArabic** (raw text preprocessing) | ✅ | ✅ | ❌ |
+| | Works with closed APIs | Arabic-specific | Reports token savings |
+|---|:---:|:---:|:---:|
+| AraToken / aranizer *(alt. tokenizers)* | ❌ | ✅ | ❌ |
+| PyArabic *(text preprocessing)* | ✅ | ✅ | ❌ |
 | **tawfeer-llm** | ✅ | ✅ | ✅ |
 
-AraToken and aranizer are full tokenizer replacements — they require
-retraining or hosting your own model. PyArabic is a mature, general-purpose
-Arabic text toolkit but has no concept of LLM token cost or savings
-reporting. tawfeer-llm sits specifically at the middleware layer: drop-in
-normalization plus measurable, transparent reporting for any API you
-already call.
+AraToken/aranizer require retraining or hosting your own model. PyArabic
+has no concept of LLM token cost. `tawfeer-llm` is middleware: drop-in
+normalization plus measurable reporting for any API you already call.
 
 ## Benchmark
 
-See [`benchmark/`](./benchmark) for the reproducible fertility benchmark
-across MSA, regional dialects, mixed Arabic-English text, and formal/legal
-register. **Current corpus is a 242-sentence hand-authored set** — still
-curated, not large-scale/naturally-occurring, so treat numbers as
-directional, not final claims. Run it yourself:
+242 hand-authored sentences across MSA, four dialect regions, mixed
+Arabic-English, and formal/legal register — run it yourself:
 
 ```bash
 python benchmark/run_benchmark.py
 ```
 
-`benchmark/` also has a separate dialect-detection validation corpus and
-runner, plus a reusable corpus quality-check tool
-(`check_corpus_quality.py`, flags near-duplicate sentences and
-cross-dialect content reuse) — see `benchmark/README.md` for all three,
-including an important caveat on the dialect-detection accuracy number's
-current reliability.
+Full corpus methodology, a reusable quality-check tool, and honest
+caveats on every measured number: [`benchmark/README.md`](./benchmark/README.md).
 
-## Roadmap
+## Docs
 
-- **v1 (shipped):** conservative normalization, transparent token-delta
-  reporting, reproducible fertility benchmark.
-- **v2 (shipped):** dialect detection (experimental), mixed-text and
-  Arabizi handling, advisory content-sensitivity warnings, RAG chunking
-  helper.
-- **v3 (shipped):** cache-key generation, LiteLLM/LangChain/LlamaIndex
-  integrations, prompt-caching optimizer (`optimize_for_caching()`),
-  exact Anthropic/Gemini token counters, `smart_prepare()` convenience
-  wrapper, and a benchmark corpus expanded from 27 to 242 sentences
-  (with a reusable quality-check tool, `benchmark/check_corpus_quality.py`).
-  - **Not yet built: formulaic-expression compression.** This needs
-    real usage data (common stock phrases/openings actually seen in
-    production Arabic text) to build a marker dictionary responsibly --
-    building it now, without that data, would mean guessing at patterns
-    instead of measuring them, which conflicts with this project's
-    "real numbers, not assumptions" approach used everywhere else. It
-    stays deliberately unbuilt until real usage data exists, not
-    forgotten.
-- **Not yet done (non-code):** publish to PyPI (checklist in
-  `PUBLISHING.md`). Currently install-from-source only (see Install
-  above). Publishing the benchmark corpus as an independent dataset
-  (e.g. HuggingFace) once it grows further via real contributions.
-
-## Limitations & honest expectations
-
-- **Diacritized religious/liturgical text** (Quranic verses, Hadith)
-  should not be normalized at all — diacritics there carry grammatical
-  meaning, not decoration. See `skill/SKILL.md` for the full list of
-  text types this library should not be applied to.
-- **Realistic savings on everyday text are often smaller** than a
-  diacritized example suggests — most modern Arabic writing has no
-  diacritics to remove to begin with.
-- **Reported token counts are tokenizer-specific.** The default counter
-  uses tiktoken's `o200k_base` encoding (GPT-4o family) as a proxy — it
-  is not the exact tokenizer for every model.
-- **`detect_dialect()` is a heuristic with a low methodological ceiling**
-  — even state-of-the-art academic systems (NADI 2024) only reach ~50%
-  F1 on this task. Treat any result as a rough signal, not a fact.
-- **`check_content_warnings()` is advisory only** and never blocks or
-  modifies text — a false negative (missing sensitive content) is
-  possible. It is opt-in and stateless by design; see `skill/SKILL.md`
-  for guidance on avoiding repeated-warning fatigue in your own session
-  logic.
-- **`get_anthropic_counter()`/`get_gemini_counter()` call the provider's
-  API over the network on every single invocation** — unlike
-  `get_default_counter()`'s tiktoken (which only needs network once,
-  then computes locally), these have real per-call latency and require
-  that provider's API key. Fine for one-off reports/benchmarks; wrong
-  choice for a per-request hot path.
-- **`optimize_for_caching()` trusts your `stable`/`dynamic` labels
-  completely** — it has no way to verify them, and reordering
-  mislabeled segments can change your prompt's meaning. Only label
-  content stable if reordering it relative to the rest is genuinely safe.
+| | |
+|---|---|
+| [`skill/SKILL.md`](./skill/SKILL.md) | Core usage rules — read this before normalizing anything sensitive |
+| [`skill/REFERENCE.md`](./skill/REFERENCE.md) | Every advanced module, in full detail |
+| [`benchmark/README.md`](./benchmark/README.md) | Corpus methodology & measured results |
+| [`integrations/README.md`](./integrations/README.md) | Notes for extending a framework integration |
+| [`PUBLISHING.md`](./PUBLISHING.md) | PyPI release checklist (not yet published) |
 
 ## License
 
