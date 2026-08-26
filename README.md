@@ -30,7 +30,7 @@ guesswork.
 ## Install
 
 ```bash
-git clone <this-repo-url> && cd tawfeer-llm
+git clone https://github.com/AbdaullahAG/tawfeer-llm.git && cd tawfeer-llm
 pip install -e ".[tokenizers]"
 ```
 
@@ -43,6 +43,13 @@ pip install -e ".[tokenizers,integrations]"  # LiteLLM / LangChain / LlamaIndex 
 ```
 
 </details>
+
+> **First-time network note:** the first call to `report_savings()` (or
+> anything using `get_default_counter()`) downloads tiktoken's encoding
+> file once, then caches it locally — no network needed after that. On
+> a restrictive network, this first call can fail; see
+> [`CONTRIBUTING.md`](./CONTRIBUTING.md#a-note-on-tiktokens-first-use-network-call)
+> for what that looks like and how to work around it.
 
 ## Quick start
 
@@ -114,6 +121,7 @@ caveats on every measured number: [`benchmark/README.md`](./benchmark/README.md)
 | [`benchmark/README.md`](./benchmark/README.md) | Corpus methodology & measured results |
 | [`integrations/README.md`](./integrations/README.md) | Notes for extending a framework integration |
 | [`PUBLISHING.md`](./PUBLISHING.md) | PyPI release checklist (not yet published) |
+| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Dev setup, running tests, code conventions, PR process |
 
 ## License
 
