@@ -1,0 +1,39 @@
+<svg width="680" height="220" viewBox="0 0 680 220" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="tawfeer-llm: an Arabic word tokenized before and after normalization, showing 60% fewer tokens">
+  <title>tawfeer-llm</title>
+  <desc>An Arabic word split into 5 tokens before normalization and 2 tokens after, connected by an arrow labeled normalize(), with a caption reading "60% fewer tokens, same meaning".</desc>
+  <text x="150" y="40" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#5F5E5A">before</text>
+  <g fill="#FAECE7" stroke="#D85A30" stroke-width="1">
+    <rect x="60" y="55" width="34" height="34" rx="4"/>
+    <rect x="98" y="55" width="34" height="34" rx="4"/>
+    <rect x="136" y="55" width="34" height="34" rx="4"/>
+    <rect x="174" y="55" width="34" height="34" rx="4"/>
+    <rect x="212" y="55" width="34" height="34" rx="4"/>
+  </g>
+  <g fill="#712B13" font-family="sans-serif" font-size="14" text-anchor="middle" dominant-baseline="central">
+    <text x="77" y="73">مَ</text>
+    <text x="115" y="73">رْ</text>
+    <text x="153" y="73">حَ</text>
+    <text x="191" y="73">بً</text>
+    <text x="229" y="73">ا</text>
+  </g>
+  <text x="153" y="112" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#5F5E5A">5 tokens</text>
+  <defs>
+    <marker id="arrowL" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <line x1="290" y1="72" x2="360" y2="72" stroke="#5F5E5A" stroke-width="1.5" marker-end="url(#arrowL)"/>
+  <text x="325" y="58" text-anchor="middle" font-family="monospace" font-size="12" fill="#5F5E5A">normalize()</text>
+  <text x="500" y="40" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#5F5E5A">after</text>
+  <g fill="#E1F5EE" stroke="#0F6E56" stroke-width="1">
+    <rect x="430" y="55" width="52" height="34" rx="4"/>
+    <rect x="490" y="55" width="60" height="34" rx="4"/>
+  </g>
+  <g fill="#085041" font-family="sans-serif" font-size="14" text-anchor="middle" dominant-baseline="central">
+    <text x="456" y="73">مر</text>
+    <text x="520" y="73">حبا</text>
+  </g>
+  <text x="490" y="112" text-anchor="middle" font-family="sans-serif" font-size="12" fill="#5F5E5A">2 tokens</text>
+  <line x1="60" y1="150" x2="620" y2="150" stroke="#D3D1C7" stroke-width="1"/>
+  <text x="340" y="180" text-anchor="middle" font-family="sans-serif" font-size="15" font-weight="600" fill="#2C2C2A">60% fewer tokens, same meaning</text>
+</svg>

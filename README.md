@@ -2,6 +2,11 @@
 
 # tawfeer-llm
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/banner-dark.svg">
+  <img alt="An Arabic word tokenized before and after normalization, showing 60% fewer tokens" src="./assets/banner-light.svg" width="680">
+</picture>
+
 **Arabic text is expensive to tokenize. This library measures exactly how expensive — and safely trims the part that isn't necessary.**
 
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)

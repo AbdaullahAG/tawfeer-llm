@@ -17,27 +17,32 @@ from __future__ import annotations
 import re
 from collections import Counter
 
-# Matches Arabic/Latin punctuation and diacritics to strip before
-# comparing answer strings. Character class only, no quantifiers beyond
-# the trailing +, no nesting -- linear in input length, no ReDoS risk.
-_PUNCTUATION_AND_DIACRITICS_PATTERN = re.compile(
-    r"[\u064B-\u0652\u0670.,!?;:\"'\u060C\u061B\u061F()\[\]{}\-]+"
-)
+from ar_tokenwise.normalize import NormalizationLevel
+from ar_tokenwise.normalize import normalize as ar_normalize
+
+# Matches punctuation only (diacritics/tatweel are already handled by
+# ar_tokenwise.normalize() at LIGHT level, reused below rather than
+# reimplemented here). Character class with a trailing +, no nesting --
+# linear in input length, no ReDoS risk.
+_PUNCTUATION_PATTERN = re.compile(r"[.,!?;:\"'\u060C\u061B\u061F()\[\]{}\-]+")
 _WHITESPACE_PATTERN = re.compile(r"\s+")
 
 
 def normalize_answer_for_comparison(text: str) -> str:
     """Lightly normalize an answer string for fair comparison.
 
-    This is deliberately separate from ar_tokenwise.normalize() -- that
-    function optimizes text for sending to a model; this one exists
-    purely to make two answer strings comparable (strip punctuation/
-    diacritics/extra whitespace), which is a different purpose with a
-    different (looser) safety bar since neither string is being sent
-    anywhere, just compared locally.
+    This is deliberately separate from calling ar_tokenwise.normalize()
+    directly on its own -- that function optimizes text for sending to
+    a model; this one exists purely to make two answer strings
+    comparable. It reuses normalize() at LIGHT level for
+    diacritic/tatweel stripping (already tested there, not
+    reimplemented here), then additionally strips punctuation, which
+    normalize() does not touch since punctuation isn't a token-cost
+    concern for that function's purpose.
     """
-    stripped = _PUNCTUATION_AND_DIACRITICS_PATTERN.sub(" ", text)
-    collapsed = _WHITESPACE_PATTERN.sub(" ", stripped).strip()
+    diacritics_and_tatweel_stripped = ar_normalize(text, level=NormalizationLevel.LIGHT)
+    punctuation_stripped = _PUNCTUATION_PATTERN.sub(" ", diacritics_and_tatweel_stripped)
+    collapsed = _WHITESPACE_PATTERN.sub(" ", punctuation_stripped).strip()
     return collapsed
 
 
