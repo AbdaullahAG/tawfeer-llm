@@ -100,7 +100,7 @@ def load_flores_sentences(lang_code: str, split: str = "devtest") -> list[str]:
             "pip install datasets"
         ) from exc
 
-    dataset = load_dataset("facebook/flores", lang_code, split=split, trust_remote_code=True)
+    dataset = load_dataset("facebook/flores", lang_code, split=split)
     return [row["sentence"] for row in dataset]
 
 

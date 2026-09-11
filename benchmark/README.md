@@ -70,6 +70,88 @@ README -- diacritic removal alone is not where most of this library's
 value comes from for typical text. See `results/latest.md` for the
 full per-category table after running the command above.
 
+## Real-world benchmarks (FLORES-200, TyDiQA, real models)
+
+Three separate scripts, each measuring something different, all
+downloading real data at run time (nothing bundled in this repo):
+
+### Track 0 — multi-provider fertility (`run_real_world_benchmark.py`)
+
+Uses **FLORES-200** devtest (professionally translated, CC BY-SA 4.0,
+covering MSA + 3 real dialect variants) plus this project's own corpus.
+
+```bash
+pip install datasets
+python benchmark/run_real_world_benchmark.py \
+    --anthropic-model claude-opus-4-8 --gemini-model gemini-3-flash
+```
+
+**Real measured results (tiktoken o200k_base, n=1012/language for
+FLORES, LIGHT level unless noted):**
+
+| Source | Saved % (LIGHT) | Saved % (MEDIUM) |
+|---|---|---|
+| FLORES MSA | 2.9% | 1.0% |
+| FLORES Gulf (Najdi) | 2.9% | 1.0% |
+| FLORES Maghrebi (Moroccan) | 0.8% | **-0.1%** |
+| FLORES Egyptian | 0.3% | **-0.7%** |
+| Own corpus (mixed) | 1.5% | 1.6% |
+| Own corpus (MSA/dialects/formal) | ~0.0% | **-0.4% to -2.3%** |
+
+**Real, honest finding this measurement surfaced:** `MEDIUM` level
+normalization measurably **increases** token count on several
+registers -- not just a theoretical risk anymore, an observed one.
+This is on top of `MEDIUM`'s already-documented meaning-preservation
+risk (see the root README and `skill/SKILL.md`). **Use `LIGHT` as the
+default; there is now real data, not just caution, behind that
+recommendation.**
+
+### Track A — comprehension eval (`run_comprehension_eval.py`)
+
+Does `normalize()` change whether a real model's answer matches a
+known-correct answer? Uses **TyDiQA-GoldP** Arabic (human-written
+questions, gold answer spans) and F1 overlap scoring -- no LLM-as-judge,
+avoiding the position/self-preference/verbosity biases documented in
+current LLM-judge research (see the script's module docstring).
+
+```bash
+# Anthropic
+export ANTHROPIC_API_KEY="..."
+python benchmark/run_comprehension_eval.py \
+    --provider anthropic --model claude-opus-4-8 --limit 50
+
+# Gemini
+export GEMINI_API_KEY="..."
+python benchmark/run_comprehension_eval.py \
+    --provider gemini --model gemini-3-flash --limit 50
+
+# Azure AI Foundry (any model you've deployed there -- OpenAI GPT
+# family or otherwise). --model is your DEPLOYMENT NAME, not
+# necessarily the underlying model's own name.
+pip install openai
+export AZURE_INFERENCE_CREDENTIAL="..."
+python benchmark/run_comprehension_eval.py \
+    --provider azure_foundry --model GPT-5.6-sol \
+    --azure-endpoint https://<your-resource>.services.ai.azure.com \
+    --azure-api-version 2024-10-21 --limit 50
+```
+
+### Track B — chunking/retrieval eval (`run_chunking_eval.py`)
+
+Does `chunk_text()`'s sentence-boundary-aware chunking retrieve the
+answer-containing chunk more or less reliably than naive fixed-token
+chunking? Uses **TyDiQA primary_task** (full documents) and real Gemini
+embeddings for retrieval.
+
+```bash
+export GEMINI_API_KEY="..."
+python benchmark/run_chunking_eval.py \
+    --embedding-model gemini-embedding-001 --limit 20
+```
+
+All three scripts write their results to `benchmark/results/` (gitignored,
+regenerated fresh each run -- never hand-edited).
+
 ## Dialect detection validation
 
 `corpus/dialect_validation.jsonl` (60 hand-labeled sentences, 12 per

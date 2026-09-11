@@ -3,7 +3,9 @@
 The real API-calling answerers (_build_anthropic_answerer,
 _build_gemini_answerer) are NOT tested here -- they need real
 credentials and make real network calls. What IS tested: evaluate_examples()
-against a fake, deterministic answerer, and summarize()'s reporting logic.
+against a fake, deterministic answerer, summarize()'s reporting logic,
+and _build_azure_foundry_answerer()'s error paths (missing credential,
+missing package) which don't require a real network call to verify.
 """
 
 import importlib.util
@@ -111,4 +113,54 @@ def test_summarize_reports_no_material_difference() -> None:
 
 def test_summarize_includes_mean_and_median() -> None:
     summary = rce.summarize([0.5, 1.0], [0.5, 1.0])
-    assert "0.750" in summary  # mean of 0.5 and 1.0
+    assert "0.750" in summary
+
+
+# --- _build_azure_foundry_answerer: error paths only (no real API call) --
+
+
+def test_azure_foundry_answerer_requires_credential(monkeypatch) -> None:
+    import pytest
+
+    monkeypatch.delenv("AZURE_INFERENCE_CREDENTIAL", raising=False)
+    monkeypatch.delenv("AZURE_OPENAI_API_KEY", raising=False)
+
+    with pytest.raises(RuntimeError, match="AZURE_INFERENCE_CREDENTIAL"):
+        rce._build_azure_foundry_answerer(
+            "GPT-5.6-sol", "https://fake.services.ai.azure.com", "2024-10-21"
+        )
+
+
+def test_azure_foundry_answerer_accepts_either_env_var_name(monkeypatch) -> None:
+    monkeypatch.delenv("AZURE_INFERENCE_CREDENTIAL", raising=False)
+    monkeypatch.setenv("AZURE_OPENAI_API_KEY", "fake-key-for-test")
+
+    # Should get past the credential check and reach real client
+    # construction (which doesn't make a network call by itself).
+    answerer = rce._build_azure_foundry_answerer(
+        "GPT-5.6-sol", "https://fake.services.ai.azure.com", "2024-10-21"
+    )
+    assert callable(answerer)
+
+
+def test_azure_foundry_answerer_raises_clear_error_without_openai_package(
+    monkeypatch,
+) -> None:
+    import builtins
+
+    import pytest
+
+    monkeypatch.setenv("AZURE_INFERENCE_CREDENTIAL", "fake-key-for-test")
+    real_import = builtins.__import__
+
+    def fake_import(name: str, *args, **kwargs):
+        if name == "openai":
+            raise ImportError("simulated missing openai")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+
+    with pytest.raises(ImportError, match="pip install openai"):
+        rce._build_azure_foundry_answerer(
+            "GPT-5.6-sol", "https://fake.services.ai.azure.com", "2024-10-21"
+        )

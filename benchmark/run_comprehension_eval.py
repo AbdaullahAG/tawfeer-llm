@@ -40,14 +40,28 @@ is written to tell you where to look, not to hide the seam.
 Usage:
     pip install -e ".[tokenizers,providers]"
     pip install datasets
+
+    # Anthropic:
     export ANTHROPIC_API_KEY="..."
     python benchmark/run_comprehension_eval.py \
-        --model claude-opus-4-8 --limit 50
+        --provider anthropic --model claude-opus-4-8 --limit 50
+
+    # Azure AI Foundry (any model deployed there, e.g. an OpenAI GPT
+    # family model): --model is your DEPLOYMENT NAME (an alias you
+    # chose when deploying), not necessarily the underlying model's own
+    # name -- Foundry lets you name deployments however you like.
+    pip install openai
+    export AZURE_INFERENCE_CREDENTIAL="..."
+    python benchmark/run_comprehension_eval.py \
+        --provider azure_foundry --model GPT-5.6-sol \
+        --azure-endpoint https://<your-resource>.services.ai.azure.com \
+        --azure-api-version 2024-10-21 --limit 50
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import statistics
 from pathlib import Path
 
@@ -114,6 +128,64 @@ def _build_gemini_answerer(model: str):
             contents=_ANSWER_PROMPT_TEMPLATE.format(passage=passage, question=question),
         )
         return response.text or ""
+
+    return _answer
+
+
+def _build_azure_foundry_answerer(deployment_name: str, endpoint: str, api_version: str):
+    """Return a callable (passage, question) -> answer_text, via Azure AI Foundry.
+
+    Azure AI Foundry (formerly Azure OpenAI Service) uses the `openai`
+    package's AzureOpenAI client -- NOT a separate Azure-specific SDK.
+    `deployment_name` is the alias YOU chose when deploying the model in
+    your Foundry resource, not necessarily the underlying model's own
+    name (e.g. you could deploy a GPT-family model under the deployment
+    name "GPT-5.6-sol" and that's what goes in --model here).
+
+    Args:
+        deployment_name: Your Foundry deployment name.
+        endpoint: Your Foundry resource endpoint, e.g.
+            "https://<resource>.services.ai.azure.com".
+        api_version: Azure OpenAI API version string, e.g. "2024-10-21"
+            -- required exactly, unlike a model name there's no safe
+            guess; check your Foundry resource's documentation for the
+            current value if this one is rejected.
+
+    Raises:
+        ImportError: if the `openai` package is not installed.
+        RuntimeError: if no Azure credential is found in the environment.
+    """
+    try:
+        from openai import AzureOpenAI
+    except ImportError as exc:
+        raise ImportError(
+            "Azure AI Foundry answer generation needs the openai package: "
+            "pip install openai"
+        ) from exc
+
+    api_key = os.environ.get("AZURE_INFERENCE_CREDENTIAL") or os.environ.get(
+        "AZURE_OPENAI_API_KEY"
+    )
+    if not api_key:
+        raise RuntimeError(
+            "Set AZURE_INFERENCE_CREDENTIAL or AZURE_OPENAI_API_KEY with your "
+            "Foundry resource's key."
+        )
+
+    client = AzureOpenAI(azure_endpoint=endpoint, api_key=api_key, api_version=api_version)
+
+    def _answer(passage: str, question: str) -> str:
+        completion = client.chat.completions.create(
+            model=deployment_name,
+            max_completion_tokens=64,
+            messages=[
+                {
+                    "role": "user",
+                    "content": _ANSWER_PROMPT_TEMPLATE.format(passage=passage, question=question),
+                }
+            ],
+        )
+        return completion.choices[0].message.content or ""
 
     return _answer
 
@@ -185,8 +257,22 @@ def summarize(f1_original: list[float], f1_normalized: list[float]) -> str:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="QA comprehension eval: original vs normalized.")
-    parser.add_argument("--provider", choices=["anthropic", "gemini"], default="anthropic")
-    parser.add_argument("--model", required=True, help="e.g. claude-opus-4-8 or gemini-3-flash")
+    parser.add_argument("--provider", choices=["anthropic", "gemini", "azure_foundry"], default="anthropic")
+    parser.add_argument(
+        "--model",
+        required=True,
+        help="e.g. claude-opus-4-8, gemini-3-flash, or your Azure Foundry deployment name",
+    )
+    parser.add_argument(
+        "--azure-endpoint",
+        default=None,
+        help="Required if --provider azure_foundry, e.g. https://<resource>.services.ai.azure.com",
+    )
+    parser.add_argument(
+        "--azure-api-version",
+        default=None,
+        help="Required if --provider azure_foundry, e.g. 2024-10-21",
+    )
     parser.add_argument("--level", choices=["light", "medium"], default="light")
     parser.add_argument("--split", default="validation", choices=["train", "validation"])
     parser.add_argument(
@@ -210,12 +296,24 @@ def main() -> int:
     print(f"Loaded {len(examples)} Arabic TyDiQA-GoldP examples.")
 
     try:
-        answerer = (
-            _build_anthropic_answerer(args.model)
-            if args.provider == "anthropic"
-            else _build_gemini_answerer(args.model)
-        )
+        if args.provider == "anthropic":
+            answerer = _build_anthropic_answerer(args.model)
+        elif args.provider == "gemini":
+            answerer = _build_gemini_answerer(args.model)
+        else:
+            if not args.azure_endpoint or not args.azure_api_version:
+                print(
+                    "--provider azure_foundry requires both --azure-endpoint "
+                    "and --azure-api-version."
+                )
+                return 1
+            answerer = _build_azure_foundry_answerer(
+                args.model, args.azure_endpoint, args.azure_api_version
+            )
     except ImportError as exc:
+        print(f"Cannot build answerer: {exc}")
+        return 1
+    except RuntimeError as exc:
         print(f"Cannot build answerer: {exc}")
         return 1
 
