@@ -26,7 +26,7 @@ same repository (`src/ar_tokenwise`) and is not yet published to PyPI.
 Install it locally from the repo root:
 
 ```bash
-pip install -e ".[tokenizers]"
+pip install "ar-tokenwise[tokenizers]"
 ```
 
 This covers both CLI scripts below. `normalize_cli.py` does not use
@@ -186,7 +186,7 @@ limitations" above for why undiacritized text saves much less):
 ```
 
 Requires the `tokenizers` extra, installed above via
-`pip install -e ".[tokenizers]"`, for real token counts measured against
+`pip install ar-tokenwise".[tokenizers]"`, for real token counts measured against
 `o200k_base` (see "Token counts are tokenizer-specific" above). If it
 wasn't installed, the script fails with a clear error rather than
 guessing token counts.

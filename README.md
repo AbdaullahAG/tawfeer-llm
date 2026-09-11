@@ -36,15 +36,15 @@ guesswork.
 ## Install
 
 ```bash
-pip install ar-tokenwise[tokenizers]
+pip install "ar-tokenwise[tokenizers]"
 ```
 
 <details>
 <summary>Optional extras (provider counters, framework integrations)</summary>
 
 ```bash
-pip install ar-tokenwise[tokenizers,providers]     # exact Anthropic/Gemini token counts
-pip install ar-tokenwise[tokenizers,integrations]  # LiteLLM / LangChain / LlamaIndex wrappers
+pip install "ar-tokenwise[tokenizers,providers]"     # exact Anthropic/Gemini token counts
+pip install "ar-tokenwise[tokenizers,integrations]"  # LiteLLM / LangChain / LlamaIndex wrappers
 ```
 
 </details>
