@@ -3,17 +3,18 @@
 # tawfeer-llm
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/banner-dark.svg">
-  <img alt="An Arabic word tokenized before and after normalization, showing 60% fewer tokens" src="./assets/banner-light.svg" width="680">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/AbdaullahAG/tawfeer-llm/main/assets/banner-dark.svg">
+  <img alt="An Arabic word tokenized before and after normalization, showing 60% fewer tokens" src="https://raw.githubusercontent.com/AbdaullahAG/tawfeer-llm/main/assets/banner-light.svg" width="680">
 </picture>
 
 **Arabic text is expensive to tokenize. This library measures exactly how expensive — and safely trims the part that isn't necessary.**
 
-[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
+[![PyPI version](https://img.shields.io/pypi/v/ar-tokenwise.svg)](https://pypi.org/project/ar-tokenwise/)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/LICENSE)
+[![Python 3.9+](https://img.shields.io/pypi/pyversions/ar-tokenwise.svg)](https://pypi.org/project/ar-tokenwise/)
 [![Dependencies: none](https://img.shields.io/badge/core%20dependencies-zero-brightgreen.svg)](#install)
 
-`pip install -e .` from source · works with Claude, GPT, Gemini, or any LLM API · no model access needed
+`pip install ar-tokenwise[tokenizers]` · works with Claude, GPT, Gemini, or any LLM API · no model access needed
 
 </div>
 
@@ -35,16 +36,15 @@ guesswork.
 ## Install
 
 ```bash
-git clone https://github.com/AbdaullahAG/tawfeer-llm.git && cd tawfeer-llm
-pip install -e ".[tokenizers]"
+pip install ar-tokenwise[tokenizers]
 ```
 
 <details>
 <summary>Optional extras (provider counters, framework integrations)</summary>
 
 ```bash
-pip install -e ".[tokenizers,providers]"     # exact Anthropic/Gemini token counts
-pip install -e ".[tokenizers,integrations]"  # LiteLLM / LangChain / LlamaIndex wrappers
+pip install ar-tokenwise[tokenizers,providers]     # exact Anthropic/Gemini token counts
+pip install ar-tokenwise[tokenizers,integrations]  # LiteLLM / LangChain / LlamaIndex wrappers
 ```
 
 </details>
@@ -53,7 +53,7 @@ pip install -e ".[tokenizers,integrations]"  # LiteLLM / LangChain / LlamaIndex 
 > anything using `get_default_counter()`) downloads tiktoken's encoding
 > file once, then caches it locally — no network needed after that. On
 > a restrictive network, this first call can fail; see
-> [`CONTRIBUTING.md`](./CONTRIBUTING.md#a-note-on-tiktokens-first-use-network-call)
+> [`CONTRIBUTING.md`](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/CONTRIBUTING.md#a-note-on-tiktokens-first-use-network-call)
 > for what that looks like and how to work around it.
 
 ## Quick start
@@ -70,7 +70,7 @@ print(report.tokens_saved, report.percent_saved, report.estimated_cost_savings_u
 
 > **Before you normalize anything:** Quranic/Hadith text, embedded ID
 > numbers, and text displayed verbatim to a user should **not** be
-> normalized — see [`skill/SKILL.md`](./skill/SKILL.md) for the full,
+> normalized — see [`skill/SKILL.md`](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/skill/SKILL.md) for the full,
 > non-negotiable list.
 
 ## What's included
@@ -89,7 +89,7 @@ print(report.tokens_saved, report.percent_saved, report.estimated_cost_savings_u
 | 🔌 **Framework integrations** | Thin, optional wrappers for LiteLLM, LangChain, LlamaIndex |
 
 Every item above is a heuristic where a heuristic is involved, and says
-so in its own docstring — see [`skill/REFERENCE.md`](./skill/REFERENCE.md)
+so in its own docstring — see [`skill/REFERENCE.md`](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/skill/REFERENCE.md)
 for full usage and every documented limitation before relying on one in
 production.
 
@@ -115,19 +115,18 @@ python benchmark/run_benchmark.py
 ```
 
 Full corpus methodology, a reusable quality-check tool, and honest
-caveats on every measured number: [`benchmark/README.md`](./benchmark/README.md).
+caveats on every measured number: [`benchmark/README.md`](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/benchmark/README.md).
 
 ## Docs
 
 | | |
 |---|---|
-| [`skill/SKILL.md`](./skill/SKILL.md) | Core usage rules — read this before normalizing anything sensitive |
-| [`skill/REFERENCE.md`](./skill/REFERENCE.md) | Every advanced module, in full detail |
-| [`benchmark/README.md`](./benchmark/README.md) | Corpus methodology & measured results |
-| [`integrations/README.md`](./integrations/README.md) | Notes for extending a framework integration |
-| [`PUBLISHING.md`](./PUBLISHING.md) | PyPI release checklist (not yet published) |
-| [`CONTRIBUTING.md`](./CONTRIBUTING.md) | Dev setup, running tests, code conventions, PR process |
+| [`skill/SKILL.md`](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/skill/SKILL.md) | Core usage rules — read this before normalizing anything sensitive |
+| [`skill/REFERENCE.md`](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/skill/REFERENCE.md) | Every advanced module, in full detail |
+| [`benchmark/README.md`](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/benchmark/README.md) | Corpus methodology & measured results |
+| [`integrations/README.md`](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/integrations/README.md) | Notes for extending a framework integration |
+| [`CONTRIBUTING.md`](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/CONTRIBUTING.md) | Dev setup, running tests, code conventions, PR process |
 
 ## License
 
-Apache License 2.0 — see [LICENSE](./LICENSE).
+Apache License 2.0 — see [LICENSE](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/LICENSE).
