@@ -55,3 +55,8 @@ include = ["src/ar_tokenwise/py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[project.urls]
+Homepage = "https://github.com/AbdaullahAG/tawfeer-llm"
+Repository = "https://github.com/AbdaullahAG/tawfeer-llm"
+Issues = "https://github.com/AbdaullahAG/tawfeer-llm/issues"
