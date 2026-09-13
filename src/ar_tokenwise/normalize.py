@@ -85,6 +85,7 @@ def normalize(
     text: str,
     level: NormalizationLevel = NormalizationLevel.LIGHT,
     max_length: int = DEFAULT_MAX_LENGTH,
+    preserve_quran: bool = False,
 ) -> str:
     """Normalize Arabic text conservatively for LLM token efficiency.
 
@@ -94,6 +95,10 @@ def normalize(
             :class:`NormalizationLevel`.
         max_length: Maximum accepted input length in characters, used as a
             size-based safety guard. Raises if exceeded.
+        preserve_quran: When true, verify four-or-more-word Quran passages
+            against the bundled reference corpus and leave each confirmed
+            passage byte-for-byte unchanged. A two- or three-word passage is
+            retained only when it extends an adjacent confirmed passage.
 
     Returns:
         The normalized text. Empty input returns empty output.
@@ -106,6 +111,19 @@ def normalize(
 
     if text == "":
         return text
+
+    if preserve_quran:
+        # Imported lazily to keep ordinary normalization as lightweight as it
+        # has always been and to avoid a module cycle (the guard shares our
+        # diacritic patterns for its comparison key).
+        from ar_tokenwise.quran_guard import protect_quranic_text
+
+        return protect_quranic_text(
+            text,
+            lambda unprotected: normalize(
+                unprotected, level=level, max_length=max_length
+            ),
+        )
 
     # Unicode canonical normalization first (NFC) so downstream regex
     # patterns match consistently regardless of how the input was encoded.

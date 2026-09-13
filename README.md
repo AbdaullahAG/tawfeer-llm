@@ -68,6 +68,27 @@ report = report_savings(text, optimized, cost_per_million_tokens=3.0)
 print(report.tokens_saved, report.percent_saved, report.estimated_cost_savings_usd)
 ```
 
+### Preserve verified Quranic passages
+
+Use `preserve_quran=True` when the input may contain Quranic quotations.
+The bundled reference corpus is loaded and indexed once per process; matching
+uses text with tashkeel and tatweel removed, while a confirmed passage is
+copied to the result exactly as the user supplied it. Four words are required
+for an independent match. Shorter two- or three-word portions are preserved
+only when they directly extend a confirmed quote.
+
+```python
+from ar_tokenwise import normalize
+
+text = "قال تعالى: بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ ٱلْحَمْدُ لِلَّهِ"
+safe = normalize(text, preserve_quran=True)
+```
+
+The bundled source is Quran JSON; see
+[`QURAN_DATA_NOTICE.md`](src/ar_tokenwise/data/QURAN_DATA_NOTICE.md) for
+attribution. It remains a direct-text verifier, not a classifier: genuine
+spelling changes outside the configured comparison key will not match.
+
 > **Before you normalize anything:** Quranic/Hadith text, embedded ID
 > numbers, and text displayed verbatim to a user should **not** be
 > normalized — see [`skill/SKILL.md`](https://github.com/AbdaullahAG/tawfeer-llm/blob/main/skill/SKILL.md) for the full,

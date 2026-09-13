@@ -9,6 +9,12 @@ inline script). See `SKILL.md` for the core, always-relevant usage
 
 ## v2/v3 library modules
 
+- **`QuranGuard` / `normalize(..., preserve_quran=True)`** — loads a bundled
+  reference corpus once and verifies Quranic word sequences rather than
+  guessing from religious keywords. Confirmed spans are left byte-for-byte as
+  supplied by the caller while surrounding text is normalized. See the core
+  skill's "Quranic quotations" section for the four-word rule and short-span
+  context requirement; the CLI tools do not expose this option.
 - **`chunk_text()`** — sentence-boundary-aware chunking for RAG pipelines,
   with a token budget (`min_tokens`/`max_tokens`).
 - **`report_mixed_fertility()`** — separate token-per-word fertility for

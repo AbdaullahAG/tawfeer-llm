@@ -37,15 +37,18 @@ file, not this one.
 
 ## Do NOT normalize this text at all
 
-- **Quranic, Hadith, or other LITURGICAL text where diacritics (tashkeel)
-  carry grammatical meaning (i'rab).** Even the `light` level removes
-  tashkeel, which is safe for ordinary prose but not for text where
-  vowel marks are part of the meaning, not decoration. Skip normalization
-  entirely for such text rather than assuming any level is safe. This is
-  narrower than "religious text in general" below -- e.g. a news article
-  mentioning a mosque opening is ordinary prose (the `light` rule below
-  applies); an actual Quranic verse or Hadith quotation, anywhere it
-  appears, is not (this rule applies, full stop, regardless of context).
+- **Hadith or other LITURGICAL text where diacritics (tashkeel) carry
+  grammatical meaning (i'rab).** Even the `light` level removes tashkeel,
+  which is safe for ordinary prose but not for text where vowel marks are
+  part of the meaning, not decoration. Skip normalization entirely rather
+  than assuming any level is safe. This is narrower than "religious text in
+  general" below -- e.g. a news article mentioning a mosque opening is
+  ordinary prose (the `light` rule below applies); an actual Hadith quotation
+  is not.
+- **Quranic quotations, by default.** Use the explicit, reference-backed
+  `preserve_quran=True` path below if token reduction is necessary. Do not
+  use ordinary `normalize()` or either CLI script on text that may contain
+  Quranic verses: they do not enable Quran protection by default.
 - **Numeric identifiers embedded in text** (ID numbers, phone numbers,
   license plates, product codes) — digit-form unification (e.g. `٣٢١` ->
   `321`) changes the literal character representation. If a downstream
@@ -67,6 +70,27 @@ of the tashkeel caveat above. **This is guidance for you to apply, not
 an automatic check**: `normalize_cli.py --level medium` will run on any
 text you give it, including text that should never have been passed to
 it at `medium` -- nothing in the script itself detects or blocks this.
+
+## Quranic quotations: explicit reference-backed preservation
+
+For Python callers who must optimize surrounding prose while retaining a
+Quranic quotation, use:
+
+```python
+from ar_tokenwise import NormalizationLevel, normalize
+
+prepared = normalize(text, level=NormalizationLevel.LIGHT, preserve_quran=True)
+```
+
+This loads the bundled Quran reference corpus once per process. It matches
+after removing tashkeel and tatweel for comparison only, then copies every
+confirmed Quranic span from the caller's original input unchanged. A
+standalone match requires at least four words. A two- or three-word segment
+is protected only when it directly extends a confirmed Quranic match, so a
+short common phrase is not treated as a verse by itself. This is a verifier,
+not a classifier: spelling changes outside that comparison key will not
+match. The bundled corpus's attribution is in
+`src/ar_tokenwise/data/QURAN_DATA_NOTICE.md`.
 
 ## Known v1 limitations (resolved in v2/v3 — see REFERENCE.md)
 
@@ -195,7 +219,9 @@ guessing token counts.
 
 1. Read the Arabic source text. Keep the original around (see
    "Reversibility") if you might need to revert.
-2. Check it against "Do NOT normalize this text at all" above.
+2. Check it against "Do NOT normalize this text at all" above. If it may
+   contain Quranic text and you need to optimize surrounding prose, use the
+   explicit `preserve_quran=True` Python API instead of the CLI.
 3. Run `normalize_cli.py` to get the optimized version.
 4. Use the optimized text in the actual LLM prompt/context you're
    building — never for text that will be displayed verbatim to a user.

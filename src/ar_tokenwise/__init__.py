@@ -31,6 +31,13 @@ from ar_tokenwise.mixed_text import (
     report_mixed_fertility,
 )
 from ar_tokenwise.normalize import NormalizationLevel, normalize
+from ar_tokenwise.quran_guard import (
+    QuranGuard,
+    QuranSpan,
+    load_quran_verses,
+    protect_quranic_text,
+    quran_match_key,
+)
 from ar_tokenwise.prompt_caching import (
     CacheOptimizedPrompt,
     PromptSegment,
@@ -52,6 +59,11 @@ __version__ = "0.1.0"
 __all__ = [
     "normalize",
     "NormalizationLevel",
+    "QuranGuard",
+    "QuranSpan",
+    "load_quran_verses",
+    "protect_quranic_text",
+    "quran_match_key",
     "report_savings",
     "TokenReport",
     "get_default_counter",
