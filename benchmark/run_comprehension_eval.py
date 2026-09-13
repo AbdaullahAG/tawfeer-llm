@@ -17,7 +17,9 @@ QA, not an LLM opinion).
 The actual experiment: for each (passage, question, gold_answer), ask a
 real model to answer using the ORIGINAL passage, and separately using
 the passage after ar_tokenwise.normalize(). Compare F1 against the gold
-answer in both conditions. If normalize() doesn't hurt comprehension,
+answer in both conditions. The primary uncertainty estimate is a paired
+bootstrap 95% CI of (F1_normalized - F1_original), which retains each
+example's before/after pairing. If normalize() doesn't hurt comprehension,
 F1_normalized should be close to F1_original -- and this script reports
 whatever the real numbers say, including if they show a real drop.
 
@@ -67,6 +69,7 @@ from pathlib import Path
 
 from ar_tokenwise.normalize import NormalizationLevel, normalize
 
+from _paired_inference import mean_and_ci95, paired_mean_difference_ci95  # type: ignore[import-not-found]
 from _text_similarity import f1_score  # type: ignore[import-not-found]
 from _tydiqa_loader import GoldPExample, load_tydiqa_goldp_arabic  # type: ignore[import-not-found]
 
@@ -217,41 +220,70 @@ def evaluate_examples(
     return f1_original, f1_normalized
 
 
-def summarize(f1_original: list[float], f1_normalized: list[float]) -> str:
+def summarize(
+    f1_original: list[float],
+    f1_normalized: list[float],
+    *,
+    bootstrap_resamples: int = 10_000,
+    noninferiority_margin: float | None = None,
+) -> str:
     """Render a Markdown summary comparing original vs normalized F1."""
-    if not f1_original:
+    if not f1_original or not f1_normalized:
         return "No examples evaluated."
+    if noninferiority_margin is not None and noninferiority_margin < 0:
+        raise ValueError("noninferiority_margin must be non-negative")
 
-    orig_mean = statistics.mean(f1_original)
-    norm_mean = statistics.mean(f1_normalized)
+    orig_mean, orig_lo, orig_hi = mean_and_ci95(f1_original)
+    norm_mean, norm_lo, norm_hi = mean_and_ci95(f1_normalized)
     orig_median = statistics.median(f1_original)
     norm_median = statistics.median(f1_normalized)
-    delta = norm_mean - orig_mean
+    delta, delta_lo, delta_hi = paired_mean_difference_ci95(
+        f1_original, f1_normalized, resamples=bootstrap_resamples
+    )
 
     lines = [
         f"n = {len(f1_original)}",
         "",
-        "| Condition | Mean F1 | Median F1 |",
+        "| Condition | Mean F1 [95% CI] | Median F1 |",
         "|---|---|---|",
-        f"| Original passage | {orig_mean:.3f} | {orig_median:.3f} |",
-        f"| Normalized passage | {norm_mean:.3f} | {norm_median:.3f} |",
+        f"| Original passage | {orig_mean:.3f} [{orig_lo:.3f}, {orig_hi:.3f}] | {orig_median:.3f} |",
+        f"| Normalized passage | {norm_mean:.3f} [{norm_lo:.3f}, {norm_hi:.3f}] | {norm_median:.3f} |",
         "",
-        f"**Delta (normalized - original): {delta:+.3f}**",
+        f"**Paired delta (normalized - original): {delta:+.3f} "
+        f"[95% bootstrap CI {delta_lo:+.3f}, {delta_hi:+.3f}]**",
     ]
-    if delta < -0.02:
+    if noninferiority_margin is not None:
+        if delta_hi < -noninferiority_margin:
+            lines.append(
+                "\nNormalization HURT comprehension beyond the pre-specified "
+                f"non-inferiority margin ({noninferiority_margin:.3f})."
+            )
+        elif delta_lo > -noninferiority_margin:
+            lines.append(
+                "\nNormalization is NON-INFERIOR within the pre-specified "
+                f"margin ({noninferiority_margin:.3f})."
+            )
+        else:
+            lines.append(
+                "\nInconclusive for the pre-specified non-inferiority margin; "
+                "the paired CI includes both acceptable and harmful effects."
+            )
+    elif delta_hi < 0:
         lines.append(
-            "\nNormalization measurably HURT comprehension on this sample. "
-            "This is a real result to report, not to explain away."
+            "\nNormalization HURT comprehension on this sample: the paired "
+            "95% CI lies below zero."
         )
-    elif delta > 0.02:
+    elif delta_lo > 0:
         lines.append(
-            "\nNormalization measurably IMPROVED apparent comprehension on this "
-            "sample -- plausibly just noise or a token-budget effect (shorter "
-            "prompt leaves more room), not a claim that normalization aids "
-            "understanding (see README's 'What it doesn't claim')."
+            "\nNormalization IMPROVED apparent comprehension on this sample: "
+            "the paired 95% CI lies above zero. This does not establish that "
+            "normalization improves understanding."
         )
     else:
-        lines.append("\nNo material difference detected on this sample.")
+        lines.append(
+            "\nInconclusive: the paired 95% CI includes zero. This is not "
+            "evidence that the conditions are equivalent."
+        )
     return "\n".join(lines)
 
 
@@ -277,6 +309,14 @@ def main() -> int:
     parser.add_argument("--split", default="validation", choices=["train", "validation"])
     parser.add_argument(
         "--limit", type=int, default=50, help="Number of examples to evaluate (API calls cost time/money)."
+    )
+    parser.add_argument(
+        "--bootstrap-resamples", type=int, default=10_000,
+        help="Paired bootstrap resamples used for the delta CI (default: 10000).",
+    )
+    parser.add_argument(
+        "--noninferiority-margin", type=float, default=None,
+        help="Pre-specified acceptable F1 decrease; enables a non-inferiority conclusion.",
     )
     args = parser.parse_args()
 
@@ -320,7 +360,12 @@ def main() -> int:
     level = NormalizationLevel.LIGHT if args.level == "light" else NormalizationLevel.MEDIUM
     f1_original, f1_normalized = evaluate_examples(examples, answerer, level)
 
-    summary = summarize(f1_original, f1_normalized)
+    summary = summarize(
+        f1_original,
+        f1_normalized,
+        bootstrap_resamples=args.bootstrap_resamples,
+        noninferiority_margin=args.noninferiority_margin,
+    )
     output = (
         f"# Comprehension eval: {args.provider}/{args.model}, level={args.level}\n\n{summary}\n"
     )

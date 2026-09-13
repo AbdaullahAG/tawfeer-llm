@@ -108,12 +108,26 @@ def test_summarize_reports_negative_delta_as_real_harm() -> None:
 
 def test_summarize_reports_no_material_difference() -> None:
     summary = rce.summarize([0.8, 0.8], [0.8, 0.8])
-    assert "No material difference" in summary
+    assert "Inconclusive" in summary
 
 
 def test_summarize_includes_mean_and_median() -> None:
     summary = rce.summarize([0.5, 1.0], [0.5, 1.0])
     assert "0.750" in summary
+
+
+def test_summarize_can_report_pre_specified_noninferiority() -> None:
+    summary = rce.summarize(
+        [1.0, 1.0], [0.99, 0.99], noninferiority_margin=0.02
+    )
+    assert "NON-INFERIOR" in summary
+
+
+def test_summarize_rejects_negative_noninferiority_margin() -> None:
+    import pytest
+
+    with pytest.raises(ValueError, match="noninferiority_margin"):
+        rce.summarize([1.0], [1.0], noninferiority_margin=-0.01)
 
 
 # --- _build_azure_foundry_answerer: error paths only (no real API call) --

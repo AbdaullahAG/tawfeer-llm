@@ -112,7 +112,11 @@ Does `normalize()` change whether a real model's answer matches a
 known-correct answer? Uses **TyDiQA-GoldP** Arabic (human-written
 questions, gold answer spans) and F1 overlap scoring -- no LLM-as-judge,
 avoiding the position/self-preference/verbosity biases documented in
-current LLM-judge research (see the script's module docstring).
+current LLM-judge research (see the script's module docstring). It reports
+per-condition descriptive CIs and a reproducible paired-bootstrap 95% CI for
+the per-example F1 difference; conclusions do not use overlap of separate
+intervals. Use `--noninferiority-margin` only with a pre-specified,
+research-justified acceptable F1 decrease.
 
 ```bash
 # Anthropic
@@ -141,7 +145,9 @@ python benchmark/run_comprehension_eval.py \
 Does `chunk_text()`'s sentence-boundary-aware chunking retrieve the
 answer-containing chunk more or less reliably than naive fixed-token
 chunking? Uses **TyDiQA primary_task** (full documents) and real Gemini
-embeddings for retrieval.
+embeddings for retrieval. Its method comparison uses a paired-bootstrap CI
+over the same documents, while the two method-level proportion CIs are
+descriptive only.
 
 ```bash
 export GEMINI_API_KEY="..."

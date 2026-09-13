@@ -18,7 +18,9 @@ a question, and a known answer string):
    anyway: "is the answer actually present in what we retrieved").
 
 Retrieval accuracy (successes / n) is reported per method with a 95%
-Wald confidence interval for a proportion.
+Wald confidence interval for descriptive context. The method comparison is
+based on a paired bootstrap 95% CI of per-document accuracy differences,
+not overlap between the separate intervals.
 
 *** IMPORTANT CAVEAT, same as run_comprehension_eval.py ***
 Not run end-to-end by whoever wrote this (no network access to
@@ -49,6 +51,7 @@ from typing import Callable
 from ar_tokenwise.chunking import chunk_text
 from ar_tokenwise.report import TokenCounter, get_default_counter
 
+from _paired_inference import paired_mean_difference_ci95  # type: ignore[import-not-found]
 from _text_similarity import normalize_answer_for_comparison  # type: ignore[import-not-found]
 from _tydiqa_loader import PrimaryExample, load_tydiqa_primary_arabic  # type: ignore[import-not-found]
 
@@ -179,7 +182,12 @@ def proportion_ci95(successes: int, n: int) -> tuple[float, float, float]:
     return p, max(0.0, p - margin), min(1.0, p + margin)
 
 
-def summarize(naive_results: list[bool], sentence_aware_results: list[bool]) -> str:
+def summarize(
+    naive_results: list[bool],
+    sentence_aware_results: list[bool],
+    *,
+    bootstrap_resamples: int = 10_000,
+) -> str:
     """Render a Markdown summary comparing retrieval accuracy between methods."""
     if not naive_results or not sentence_aware_results:
         return "No examples evaluated."
@@ -188,7 +196,11 @@ def summarize(naive_results: list[bool], sentence_aware_results: list[bool]) -> 
     sa_p, sa_lo, sa_hi = proportion_ci95(
         sum(sentence_aware_results), len(sentence_aware_results)
     )
-    delta = sa_p - naive_p
+    delta, delta_lo, delta_hi = paired_mean_difference_ci95(
+        [float(result) for result in naive_results],
+        [float(result) for result in sentence_aware_results],
+        resamples=bootstrap_resamples,
+    )
 
     lines = [
         f"n = {len(naive_results)}",
@@ -198,17 +210,24 @@ def summarize(naive_results: list[bool], sentence_aware_results: list[bool]) -> 
         f"| Naive fixed-token | {naive_p:.1%} | [{naive_lo:.1%}, {naive_hi:.1%}] |",
         f"| chunk_text() (sentence-aware) | {sa_p:.1%} | [{sa_lo:.1%}, {sa_hi:.1%}] |",
         "",
-        f"**Delta (sentence-aware - naive): {delta:+.1%}**",
+        f"**Paired delta (sentence-aware - naive): {delta:+.1%} "
+        f"[95% bootstrap CI {delta_lo:+.1%}, {delta_hi:+.1%}]**",
     ]
-    if delta < -0.02:
+    if delta_hi < 0:
         lines.append(
-            "\nSentence-aware chunking retrieved WORSE on this sample. A real "
-            "result to report as-is, not to explain away."
+            "\nSentence-aware chunking retrieved WORSE on this sample: the "
+            "paired 95% CI lies below zero."
         )
-    elif delta > 0.02:
-        lines.append("\nSentence-aware chunking retrieved BETTER on this sample.")
+    elif delta_lo > 0:
+        lines.append(
+            "\nSentence-aware chunking retrieved BETTER on this sample: the "
+            "paired 95% CI lies above zero."
+        )
     else:
-        lines.append("\nNo material difference detected on this sample.")
+        lines.append(
+            "\nInconclusive: the paired 95% CI includes zero; this is not "
+            "evidence that the methods are equivalent."
+        )
     return "\n".join(lines)
 
 
@@ -223,6 +242,10 @@ def main() -> int:
         type=int,
         default=20,
         help="Number of documents to evaluate (each document costs multiple embedding calls).",
+    )
+    parser.add_argument(
+        "--bootstrap-resamples", type=int, default=10_000,
+        help="Paired bootstrap resamples used for the delta CI (default: 10000).",
     )
     args = parser.parse_args()
 
@@ -256,7 +279,9 @@ def main() -> int:
         examples, embedder, counter, "sentence_aware", args.chunk_max_tokens, args.top_k
     )
 
-    summary = summarize(naive_results, sentence_aware_results)
+    summary = summarize(
+        naive_results, sentence_aware_results, bootstrap_resamples=args.bootstrap_resamples
+    )
     output = (
         f"# Chunking/retrieval eval: {args.embedding_model}, "
         f"max_tokens={args.chunk_max_tokens}, top_k={args.top_k}\n\n{summary}\n"

@@ -204,4 +204,4 @@ def test_summarize_reports_worse_retrieval_honestly() -> None:
 
 def test_summarize_reports_no_material_difference() -> None:
     summary = rche.summarize([True, False], [True, False])
-    assert "No material difference" in summary
+    assert "Inconclusive" in summary
